@@ -14,6 +14,7 @@ mod models;
 use models::{response};
 mod blockchain;
 use blockchain::wallet;
+use blockchain::transfer;
 use crate::req_models::wallet_requests::CreateWalletReq;
 
 mod utils;
@@ -31,7 +32,7 @@ async fn index() -> impl Responder {
 
 #[get("/{name}")]
 async fn hello(name: web::Path<String>) -> impl Responder {
-    format!("Hello {}!", &name)
+    format!("Hello {:?}!", &name)
 }
 
 // std::io::Result<()>
@@ -39,9 +40,16 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 async fn main() {
     env::set_var("RUST_BACKTRACE", "full");
 
-    // wallet::Wallet::create_wallet(CreateWalletReq{address:"toto".to_string(), private_key:"toto".to_string()});
+    // wallet::Wallet::create_wallet("David".to_string());
+    // match transfer::Transfer::transfer("David".to_string(), "john".to_string(), 10.0) {
+    //     Ok(_)=>{},
+    //     Err(err)=>{
+    //         println!("{:?}", err)
+    //     }
+    // }
 
-    match wallet::Wallet::get_balance("toto".to_string()){
+
+    match wallet::Wallet::get_balance(&"David".to_string()){
         Ok(data)=>{println!("{:?}", data)},
         Err(err)=>{
             println!("{:?}", err)

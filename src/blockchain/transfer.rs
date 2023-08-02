@@ -15,8 +15,8 @@ impl Transfer {
     pub fn transfer(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
         // get sender public key from last block
         // check if both wallets exist
-        let sender_exists = Wallet::wallet_exists(sender);
-        let receiver_exists = Wallet::wallet_exists(receiver);
+        let sender_exists = Wallet::wallet_exists(&sender);
+        let receiver_exists = Wallet::wallet_exists(&receiver);
         if sender_exists!= true || receiver_exists !=true {
             return Err(Box::from("Wallet does not exist"))
         }
@@ -35,7 +35,7 @@ impl Transfer {
         };
 
         if sender_balance < amount{
-            return Err(Box::from("Wallet does not exist"))
+            return Err(Box::from("Insufficient funds"))
         }
         // create minus block
         let sender_h = serde_json::to_string(&sender_chain.borrow().chain.last().unwrap());
@@ -58,7 +58,7 @@ impl Transfer {
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
             hash:sender_h,
-            amount: -amount,
+            amount: -amount.clone(),
             public_key: sender_chain.chain.last().unwrap().public_key.clone()
         };
         // create add block for receiver
@@ -68,10 +68,20 @@ impl Transfer {
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
             hash:receiver_h,
-            amount: amount,
+            amount: amount.clone(),
             public_key: sender_chain.chain.last().unwrap().public_key.clone()
         };
         // if two blocks are saved well, send response
+        match Wallet::save_block(&sender, sender_block){
+            Ok(_)=>{},
+            Err(err)=>{return Err(err.into())}
+        }
+
+        match Wallet::save_block(&receiver, receiver_block){
+            Ok(_)=>{},
+            Err(err)=>{return Err(err.into())}
+        }
+
 
         return Ok(())
     }

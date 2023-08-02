@@ -4,7 +4,7 @@ use std::error::Error;
 use std::fmt::format;
 use sha256::digest;
 use std::{fs, str};
-use std::fs::{File, read};
+use std::fs::{File, OpenOptions, read};
 use std::io::{Read, Write};
 use std::path::Path;
 use actix_web::dev::ResourcePath;
@@ -25,21 +25,22 @@ pub struct Wallet{
 impl Wallet {
 
     // check if data path exists
-    pub fn wallet_exists (address:String)->bool{
+    pub fn wallet_exists (address:&String)->bool{
         let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),r"\data\" ,address.to_owned());
+        println!("{}", data_path);
         if !Path::new(data_path.as_str()).exists() {
-            return true
-        }else {
             return false
+        }else {
+            return true
         }
     }
 
     // create a wallet on the blockchain
-    pub fn create_wallet(req_data:CreateWalletReq)->Result<(), Box<dyn Error>>{
+    pub fn create_wallet(address:String)->Result<(), Box<dyn Error>>{
         // check if wallet exists
         let dp:&str = r"\data\";
 
-        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), dp,req_data.address.to_owned());
+        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), dp,address.to_owned());
         if !Path::new(data_path.as_str()).exists() {
             let folder = fs::create_dir_all(data_path.as_str());
             match folder {
@@ -133,7 +134,49 @@ impl Wallet {
     }
 
     // save block
+    pub fn save_block(address: &String, block:Block)->Result<(), Box<dyn Error>>{
+        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str()
+            .unwrap_or_default(), r"\data\",address.to_owned());
+        let chain_path = format!("{}{}", data_path, r"\chain.bin");
+        println!("data : {}", chain_path);
+        //open file
+        let mut file = OpenOptions::new().write(true).open(chain_path);
+        let mut file = match file {
+            Ok(file)=>{file},
+            Err(err)=>{return Err(err.into())}
+        };
 
+        // get chain
+        let mut chain = match Wallet::get_wallet_chain(address){
+            Ok(chain)=>{chain},
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // append chain
+
+        chain.chain.push(block);
+
+        // save block to chain
+
+
+        let json = serde_json::to_string(chain.borrow());
+        let json =match json {
+            Ok(json)=>{json},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        };
+        println!("{}", json);
+        let write_ok =file.write_all(json.as_bytes());
+        let write_ok = match write_ok {
+            Ok(write_ok)=>{write_ok},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        };
+
+        return Ok(())
+    }
 
     // gets a users wallet balance
     pub fn get_balance(address:&String)->Result<f32, Box<dyn Error>>{
