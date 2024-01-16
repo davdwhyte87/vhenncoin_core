@@ -7,16 +7,23 @@ use std::{fs, str};
 use std::fs::{File, OpenOptions, read};
 use std::io::{Read, Write};
 use std::path::Path;
+use std::ptr::null;
 use actix_web::dev::ResourcePath;
 use base64::Engine;
 use base64::engine::general_purpose;
-use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
+use ring::error::Unspecified;
+use ring::rand::SystemRandom;
+use ring::signature::{Ed25519KeyPair, KeyPair};
+use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey, pkcs1::DecodeRsaPrivateKey};
+use rsa::pkcs1::{EncodeRsaPrivateKey, EncodeRsaPublicKey, LineEnding};
+use rsa::pkcs8::EncodePrivateKey;
 use rsa::rand_core;
 use serde::de::IntoDeserializer;
 use uuid::Uuid;
 
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
+use crate::utils::time::get_date_time;
 
 pub struct Wallet{
 
@@ -36,7 +43,8 @@ impl Wallet {
     }
 
     // create a wallet on the blockchain
-    pub fn create_wallet(address:String)->Result<(), Box<dyn Error>>{
+    pub fn create_wallet(address:String, public_key:String)->Result<(), Box<dyn Error>>{
+
         // check if wallet exists
         let dp:&str = r"\data\";
 
@@ -67,13 +75,13 @@ impl Wallet {
         };
 
         let mut chain: Chain = Chain { chain: vec![Block{
-            id: "mlfkmkf".to_string(),
-            sender_address:"ikmskfvm.".to_string(),
-            receiver_address: "fvkmslkfmvd".to_string(),
-            date_created:"fvkmslkfmvd".to_string(),
-            hash:"fvkmslkfmvd".to_string(),
+            id: uuid::Uuid::new_v4().to_string(),
+            sender_address:"00000000".to_string(),
+            receiver_address:address,
+            date_created:get_date_time(),
+            hash:"00000000".to_string(),
             amount: 393.0,
-            public_key: "dkd".to_string()
+            public_key
         }] };
 
         let json = serde_json::to_string(chain.borrow());
@@ -248,7 +256,7 @@ impl Wallet {
         let u1priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
         let u1pub_key = RsaPublicKey::from(&u1priv_key);
 
-        let u2priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
+        let u2priv_key = RsaPrivateKey::new(&mut rng, bits.clone()).expect("failed to generate a key");
         let u2pub_key = RsaPublicKey::from(&u2priv_key);
 
 // Encrypt
@@ -266,5 +274,46 @@ impl Wallet {
         println!("{:?}",String::from_utf8(dec_data[..].to_owned()).unwrap());
     }
 
+    pub fn generate_key(){
+        let mut rng = rand::thread_rng();
+        let bits = 256;
+        let priv_key = RsaPrivateKey::new(&mut rng, bits.clone()).expect("failed to generate a key");
+        let pub_key = RsaPublicKey::from(&priv_key);
 
+
+        let private_key_pem = match  priv_key.to_pkcs1_pem(LineEnding::default()){
+            Ok(private_key_pem)=>{private_key_pem},
+            Err(err)=>{
+                println!("{:?}", err.to_string());
+                return
+            }
+        };
+
+        let public_key_pem = match pub_key.to_pkcs1_pem(LineEnding::default()){
+            Ok(public_key_pem)=>{public_key_pem},
+            Err(err)=>{
+                println!("{:?}", err.to_string());
+                return
+            }
+        };
+        let l = RsaPrivateKey::from_pkcs1_pem(private_key_pem.to_string().as_str()).unwrap();
+        // encode private and public keys
+        let private_key_enc = general_purpose::URL_SAFE_NO_PAD.encode(private_key_pem.to_string());
+        let public_key_enc = general_purpose::URL_SAFE_NO_PAD.encode(public_key_pem.to_string());
+       // println!("{:?}",private_key_pem.to_string());
+        println!("private key {:?}",private_key_enc);
+        println!("public key {:?}",public_key_enc);
+        let address = sha256::digest(public_key_pem);
+        println!("wallet address {:?}",format!("{}{}","Vc",address));
+    }
+
+    pub fn edd_generate_keys(){
+        let rand = SystemRandom::new();
+        let pkcs8_bytes = Ed25519KeyPair::generate_pkcs8(&rand).unwrap(); // pkcs8 format used for persistent storage
+        let key_pair = Ed25519KeyPair::from_pkcs8(pkcs8_bytes.as_ref()).map_err(|_| Unspecified).unwrap();
+
+        println!("private key {}", general_purpose::URL_SAFE_NO_PAD.encode(pkcs8_bytes.as_ref()));
+        println!("public key {}", general_purpose::URL_SAFE_NO_PAD.encode(key_pair.public_key()));
+
+    }
 }
