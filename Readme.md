@@ -12,8 +12,25 @@ it in their software applications.
 
 
 # Key Features 
-- Proof of stake 
-- Data prooning
+Miners
+- Miner should be able to set up a new node with public and private key
+- Miner should be able to set up wallet have a wallet
+- Miner should be able to get transaction fees
+- Miner should be able to stake coins
+
+ User
+- The user should be able to create a wallet
+- User should be able to transfer coins
+- User can view the balance
+
+ Node
+- Consensus on balance
+  Node should broadcast transactions
+  Node should have keys pub and priv
+  Node discovery
+  Node rate limit
+  KV store concurrency
+
 
 
 
