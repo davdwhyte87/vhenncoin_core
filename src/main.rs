@@ -11,12 +11,14 @@ use controllers::{
 
 };
 mod models;
+mod handlers;
 use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::node::Node;
+use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
 
@@ -43,25 +45,27 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 async fn main() {
     env::set_var("RUST_BACKTRACE", "full");
 
-    let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
-        Ok(kv_store)=>{kv_store},
-        Err(err)=>{return println!("{}",err.to_string())}
-    };
-    let chain = Chain{ chain: vec![Block{
-        id: "hcb d n".to_string(),
-        sender_address: "sender".to_string(),
-        receiver_address: "".to_string(),
-        date_created: "".to_string(),
-        hash: "jndljvnkfj".to_string(),
-        amount: 0.0,
-        public_key: "".to_string(),
-    }] };
-    match kv_store.save(Some(chain)){
-        Ok(_)=>{println!("successful ")},
-        Err(err)=>{return println!("{}",err.to_string())}
-    }
+    // let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
+    //     Ok(kv_store)=>{kv_store},
+    //     Err(err)=>{return println!("{}",err.to_string())}
+    // };
+    // let chain = Chain{ chain: vec![Block{
+    //     id: "hcb d n".to_string(),
+    //     sender_address: "sender".to_string(),
+    //     receiver_address: "".to_string(),
+    //     date_created: "".to_string(),
+    //     hash: "jndljvnkfj".to_string(),
+    //     amount: 0.0,
+    //     public_key: "".to_string(),
+    // }] };
+    // match kv_store.save(Some(chain)){
+    //     Ok(_)=>{println!("successful ")},
+    //     Err(err)=>{return println!("{}",err.to_string())}
+    // }
 
-    //Node::serve();
+    //Wallet::gen()
+
+    Node::serve();
     // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
     // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());
 

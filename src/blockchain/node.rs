@@ -2,7 +2,8 @@ use std::borrow::Borrow;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use serde_json::to_string;
-use crate::blockchain::handlers::Handler;
+use crate::handlers::handlers::Handler;
+
 
 pub struct Node {
 
@@ -32,8 +33,9 @@ impl Node {
 
         match data_set[0]{
 
-            "CREATE_WALLET" =>{
-               println!("Create wallet now")
+            "CreateWallet" =>{
+               println!("Create wallet now");
+                Handler::create_wallet(&data_set[1].to_string(), stream.borrow())
             },
             "TRANSFER"=>{
               Handler::transfer(data_set[1].to_string(), stream.borrow());

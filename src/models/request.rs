@@ -1,12 +1,21 @@
+use serde::{Serialize,Deserialize};
 
-use serde_derive::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TransferReq {
-    pub message: String,
     pub sender: String,
     pub receiver: String,
     pub amount: String,
-    pub transaction_key: String
+  
 }
+
+
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateWalletReq {
+    pub address: String,
+    pub password: String,
+    pub wallet_name:String
+}
+
 

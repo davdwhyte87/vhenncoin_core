@@ -2,17 +2,20 @@ use std::borrow::Borrow;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use serde;
-use serde::Serialize;
+
 
 
 use std::env::current_dir;
 use std::path::Path;
+use serde::{Deserialize, Serialize};
+
+use crate::models::block::{Block, Chain};
 
 pub struct KvStore {
+    db_address:String,
     db_name:String,
-    db_path:String,
 
 }
 
@@ -20,8 +23,10 @@ impl KvStore {
 
 
 
-    pub fn create_db(db_name:String,  path:String) -> Result<KvStore, Box<dyn Error>>{
-        let real_path = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),path);
+    pub fn create_db(address:String, db_name:String) -> Result<(), Box<dyn Error>>{
+        let wallet_path = format!("{}{}{}",r"\data\",address,r"\");
+        let db_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path,db_name, ".bin");
+        let real_wallet_path = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path);
         // chekc if file exists
         // match fs::metadata(real_path.clone()){
         //     Ok(_)=>{},
@@ -29,9 +34,11 @@ impl KvStore {
         // }
         // create new path
 
-        println!("{}",real_path);
-        if !Path::new(real_path.as_str()).exists() {
-            let folder = fs::create_dir_all(real_path.as_str());
+        println!("wallet path {}",wallet_path);
+        println!("db path {}",db_path);
+        println!("real wallet path {}", real_wallet_path);
+        if !Path::new(real_wallet_path.as_str()).exists() {
+            let folder = fs::create_dir_all(real_wallet_path.as_str());
             match folder {
                 Ok(folder)=>folder,
                 Err(err)=>{
@@ -40,7 +47,7 @@ impl KvStore {
                 }
             }
 
-            let db_path = format!("{}{}{}", real_path, db_name,".bin");
+
             match File::create(db_path.as_str()){
                 Ok(_)=>{},
                 Err(err)=>{return Err(err.into())}
@@ -55,11 +62,14 @@ impl KvStore {
         //     Err(err) => { return Err(err.into()) }
         // };
 
-        return Ok(KvStore { db_name: db_name, db_path: path })
+        return Ok(())
     }
 
-    pub fn save<T:Serialize>(self, data:Option<T>)->Result<(), Box<dyn Error>>{
-        let real_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),self.db_path,self.db_name, ".bin");
+    pub fn save<T:Serialize>(address:String, db_name:String, data:Option<T>)->Result<(), Box<dyn Error>>{
+
+        let wallet_path = format!("{}{}{}",r"\data\",address,r"\");
+        let db_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path,db_name, ".bin");
+
         //let chain = Chain{ chain: vec![] };
 
 
@@ -72,7 +82,7 @@ impl KvStore {
             Ok(data_string) => {data_string}
             Err(err) => {return Err(err.into()) }
         };
-        let file = File::options().write(true).open(real_path);
+        let file = File::options().write(true).open(db_path);
         let mut file =match file {
             Ok(file) => { file },
             Err(err) => { return Err(err.into()) }
@@ -86,7 +96,42 @@ impl KvStore {
         return Ok(());
     }
 
-    pub fn get(){
+    // pub fn init(address:String,db_name:String ) ->KvStore{
+    //     let wallet_path = format!("{}{}{}",r"\data\",address,r"\");
+    //     let db_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path,db_name, ".bin");
+    //     let real_wallet_path = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path);
+    //
+    //     return KvStore{
+    //         db_address: address,
+    //         db_name,
+    //     }
+    // }
+    pub fn get<'de, T: Deserialize<'de>>(address:String, db_name:String) ->Result<T, Box<dyn Error>>{
+        let wallet_path = format!("{}{}{}",r"\data\",address,r"\");
+        let db_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path,db_name, ".bin");
+        let real_wallet_path = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path);
+        // read from disk
+        let mut file =match  File::open(db_path){
+            Ok(file)=>{file},
+            Err(err)=>{return Err(err.into())}
+        };
+        let mut content:&'static str = "";
+
+        match file.read_to_string(&mut content.to_string()){
+            Ok(_)=>{},
+            Err(err)=>{return Err(err.into())}
+        }
+
+
+
+        // decode data
+        let mut chain: T = match  serde_json::from_str(content) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        };
+        return  Ok(chain)
 
     }
 

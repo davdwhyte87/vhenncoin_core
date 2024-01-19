@@ -4,6 +4,7 @@ use serde::{Serialize, Deserialize};
 pub struct Wallet {
     pub id: String,
     pub address: String,
+    pub wallet_name: String,
     pub created_at: String,
     pub is_private: bool,
     pub transaction_limit: bool,

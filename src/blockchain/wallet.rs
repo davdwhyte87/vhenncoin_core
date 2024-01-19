@@ -11,6 +11,8 @@ use std::ptr::null;
 use actix_web::dev::ResourcePath;
 use base64::Engine;
 use base64::engine::general_purpose;
+use rand::rngs::StdRng;
+use ring::digest::SHA512;
 use ring::error::Unspecified;
 use ring::rand::SystemRandom;
 use ring::signature::{Ed25519KeyPair, KeyPair};
@@ -18,8 +20,13 @@ use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey, pkcs1::DecodeRsaPrivateK
 use rsa::pkcs1::{EncodeRsaPrivateKey, EncodeRsaPublicKey, LineEnding};
 use rsa::pkcs8::EncodePrivateKey;
 use rsa::rand_core;
+use rsa::rand_core::SeedableRng;
+use serde::__private::de::IdentifierDeserializer;
 use serde::de::IntoDeserializer;
 use uuid::Uuid;
+use uuid::Version::Sha1;
+use validator::HasLen;
+use crate::blockchain::kv_store::KvStore;
 
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
@@ -45,60 +52,32 @@ impl Wallet {
     // create a wallet on the blockchain
     pub fn create_wallet(address:String, public_key:String)->Result<(), Box<dyn Error>>{
 
-        // check if wallet exists
-        let dp:&str = r"\data\";
-
-        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), dp,address.to_owned());
-        if !Path::new(data_path.as_str()).exists() {
-            let folder = fs::create_dir_all(data_path.as_str());
-            match folder {
-                Ok(folder)=>folder,
-                Err(err)=>{
-                    println!("{}", err.to_string());
-                    return Err(err.into())
-                }
-            }
-
-        }else{
-            println!("{}", "Path exists".to_string())
-        }
-
-        // create necessary files
-        let bin_path = format!("{}{}", data_path, r"\chain.bin");
-        let file = File::create(bin_path.as_str());
-        let mut file =match file {
-            Ok(file)=>{file},
-            Err(err)=>{
-                println!("{}", "Path exists".to_string());
-                return Err(err.into())
-            }
+        // create database
+        match  KvStore::create_db(address.clone(),"chain".to_string()){
+            Ok(kv_store)=>{
+                println!("Done creating wallet");
+            },
+            Err(err)=>{println!("{}",err.to_string())}
         };
-
-        let mut chain: Chain = Chain { chain: vec![Block{
-            id: uuid::Uuid::new_v4().to_string(),
-            sender_address:"00000000".to_string(),
-            receiver_address:address,
-            date_created:get_date_time(),
-            hash:"00000000".to_string(),
-            amount: 393.0,
-            public_key
+        let chain = Chain{ chain: vec![Block{
+            id: "hcb d n".to_string(),
+            sender_address: "sender".to_string(),
+            receiver_address: "".to_string(),
+            date_created: "".to_string(),
+            hash: "jndljvnkfj".to_string(),
+            amount: 100.0,
+            public_key: "".to_string(),
         }] };
 
-        let json = serde_json::to_string(chain.borrow());
-        let json =match json {
-            Ok(json)=>{json},
+        // save data
+        match KvStore::save(address,"chain".to_string(),Some(chain)){
+            Ok(_)=>{
+             
+            },
             Err(err)=>{
-                return Err(err.into())
-            }
-        };
-        println!("{}", json);
-        let write_ok =file.write_all(json.as_bytes());
-        let write_ok = match write_ok {
-            Ok(write_ok)=>{write_ok},
-            Err(err)=>{
-                return Err(err.into())
-            }
-        };
+                println!("{}",err.to_string())}
+        }
+        
         return Ok(())
     }
 
@@ -244,6 +223,33 @@ impl Wallet {
 
     }
 
+    pub fn gen(){
+        let mut dd= ("nomii the times are live".as_bytes());
+        println!("{}",dd.length());
+        //let mut rng = StdRng::from_seed(dd);
+        use sha2::Sha256;
+        use hkdf::Hkdf;
+        use hex_literal::hex;
+
+        let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
+        let salt = hex!("000102030405060708090a0b0c");
+        let info = "the man is a benh".as_bytes().to_vec();
+
+        let hk = Hkdf::<Sha256>::new(Some(&salt[..]), &ikm);
+        let mut okm = [0u8; 32];
+        hk.expand(&info, &mut okm)
+            .expect("42 is a valid length for Sha256 to output");
+
+        let mut rng = StdRng::from_seed(okm);
+        //let mut rng = rand::thread_rng();
+
+        let bits = 256;
+        let u1priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
+        let u1pub_key = RsaPublicKey::from(&u1priv_key);
+        let m = format!("public key {} private key{} ",u1pub_key.to_pkcs1_pem(LineEnding::default()).unwrap().as_str(), u1priv_key.to_pkcs1_pem(LineEnding::default()).unwrap().as_str());
+        println!("{}",m);
+    }
+
     pub fn enc(){
 
         use base64::{engine, alphabet, Engine as _};
@@ -251,7 +257,8 @@ impl Wallet {
 
 
         // let encoded = crazy_engine.encode(b"abc 123");
-        let mut rng = rand::thread_rng();
+        let dd = "nomii".as_bytes().try_into().unwrap_or_default();
+        let mut rng = StdRng::from_seed(dd);
         let bits = 2048;
         let u1priv_key = RsaPrivateKey::new(&mut rng, bits).expect("failed to generate a key");
         let u1pub_key = RsaPublicKey::from(&u1priv_key);
@@ -259,6 +266,8 @@ impl Wallet {
         let u2priv_key = RsaPrivateKey::new(&mut rng, bits.clone()).expect("failed to generate a key");
         let u2pub_key = RsaPublicKey::from(&u2priv_key);
 
+        let m = format!("{} {} ",u1pub_key.to_pkcs1_pem(LineEnding::default()).unwrap().as_str(), u1priv_key.to_pkcs1_pem(LineEnding::default()).unwrap().as_str());
+        println!("{}",m);
 // Encrypt
         let data = b"hello world";
         let enc_data = u1pub_key.encrypt(&mut rng, Pkcs1v15Encrypt, &data[..]).expect("failed to encrypt");
