@@ -212,12 +212,14 @@ impl Transfer {
             date_created: get_date_time(),
             hash:sender_h,
             amount: -amount.clone(),
+            prev_hash :"".to_string(),
             public_key: sender_chain.chain.last().unwrap().public_key.clone()
         };
         // create add block for receiver
         let receiver_block = Block{
             id: Uuid::new_v4().to_string(),
             sender_address: sender.to_owned(),
+            prev_hash :"".to_string(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
             hash:receiver_h,

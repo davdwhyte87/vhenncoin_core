@@ -8,6 +8,7 @@ pub struct Block{
     pub receiver_address:String,
     pub date_created:String,
     pub hash:String,
+    pub prev_hash:String,
     pub amount: f32,
     pub public_key: String
 }

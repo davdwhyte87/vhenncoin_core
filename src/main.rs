@@ -4,6 +4,10 @@ use std::env;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web::web::{Data, resource, route, service};
 
+use log::{info, LevelFilter};
+use log4rs::append::console::ConsoleAppender;
+use log4rs::Config;
+use log4rs::config::{Appender, Root};
 
 mod controllers;
 use controllers::{
@@ -64,7 +68,13 @@ async fn main() {
     // }
 
     //Wallet::gen()
-
+    let stdout = ConsoleAppender::builder().build();
+    let config = Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Trace))
+        .unwrap();
+    let _handle = log4rs::init_config(config).unwrap();
+    info!("Starting server..");
     Node::serve();
     // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
     // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());

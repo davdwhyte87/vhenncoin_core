@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::env::current_dir;
 use std::error::Error;
 use std::fmt::format;
-use sha256::digest;
+use sha2::{Sha256, Digest};
 use std::{fs, str};
 use std::fs::{File, OpenOptions, read};
 use std::io::{Read, Write};
@@ -11,6 +11,7 @@ use std::ptr::null;
 use actix_web::dev::ResourcePath;
 use base64::Engine;
 use base64::engine::general_purpose;
+use log::{debug, error};
 use rand::rngs::StdRng;
 use ring::digest::SHA512;
 use ring::error::Unspecified;
@@ -23,7 +24,9 @@ use rsa::rand_core;
 use rsa::rand_core::SeedableRng;
 use serde::__private::de::IdentifierDeserializer;
 use serde::de::IntoDeserializer;
-use uuid::Uuid;
+use sha256::digest;
+
+use uuid::{Uuid, uuid};
 use uuid::Version::Sha1;
 use validator::HasLen;
 use crate::blockchain::kv_store::KvStore;
@@ -54,30 +57,40 @@ impl Wallet {
 
         // create database
         match  KvStore::create_db(address.clone(),"chain".to_string()){
-            Ok(kv_store)=>{
-                println!("Done creating wallet");
+            Ok(_)=>{
+                debug!("Done creating wallet");
             },
-            Err(err)=>{println!("{}",err.to_string())}
+            Err(err)=>{
+                error!("{}",err.to_string());
+                return Err(err.into());
+            }
         };
-        let chain = Chain{ chain: vec![Block{
-            id: "hcb d n".to_string(),
-            sender_address: "sender".to_string(),
-            receiver_address: "".to_string(),
+        let mut block =Block{
+            id: Uuid::new_v4().to_string(),
+            sender_address: "000000000".to_string(),
+            receiver_address: address.to_owned(),
             date_created: "".to_string(),
-            hash: "jndljvnkfj".to_string(),
+            hash: "".to_string(),
             amount: 100.0,
+            prev_hash:"000000000".to_string(),
             public_key: "".to_string(),
-        }] };
+        };
+
+        let hash = digest(format!("{}{}{}{}{}",block.id, block.sender_address,
+                                  block.receiver_address,block.amount, block.prev_hash ));
+
+        block.hash = hash;
+        let chain = Chain{ chain: vec![block] };
 
         // save data
         match KvStore::save(address,"chain".to_string(),Some(chain)){
             Ok(_)=>{
-             
+                debug!("Suscessful write to chain")
             },
             Err(err)=>{
-                println!("{}",err.to_string())}
+                error!("{}",err.to_string())}
         }
-        
+
         return Ok(())
     }
 
