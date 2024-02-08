@@ -120,9 +120,20 @@ fn main() {
     //     tokio::task::spawn_local( async move  { start_http_server().await });
     // });
 
-    let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
-    let task = start_http_server();
-    rt.spawn(task);
+    // start http server if configed to
+    let http_on = match env::var("HTTP_ON"){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "8000".to_string()
+        }
+    };
+    if (http_on == "1"){
+        let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
+        let task = start_http_server();
+        rt.spawn(task);
+    }
+
     //rt.block_on(task);
 
    Node::serve();
