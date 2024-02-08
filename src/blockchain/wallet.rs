@@ -30,6 +30,7 @@ use uuid::{Uuid, uuid};
 use uuid::Version::Sha1;
 use validator::HasLen;
 use crate::blockchain::kv_store::KvStore;
+use crate::models::block;
 
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
@@ -74,6 +75,7 @@ impl Wallet {
             amount: 100.0,
             prev_hash:"000000000".to_string(),
             public_key: "".to_string(),
+            balance: 100.0,
         };
 
         let hash = digest(format!("{}{}{}{}{}",block.id, block.sender_address,
@@ -181,17 +183,33 @@ impl Wallet {
     // gets a users wallet balance
     pub fn get_balance(address:&String)->Result<f32, Box<dyn Error>>{
         // get the chain
-        let chain = match Wallet::get_wallet_chain(address){
+        let chain:Chain = match KvStore::get(address.to_string(), "chain".to_string()){
             Ok(data)=>{data},
             Err(err)=>{
                 return Err(err.into())
             }
         };
+        //let pos = chain.len()-1;
         // loop through and add all the block amounts
-        let mut balance:f32 = 0.0;
-        for block in chain.chain.into_iter(){
-            balance = balance+block.amount;
-        }
+        let tmp_block =&&Block{
+            id: "".to_string(),
+            sender_address: "".to_string(),
+            receiver_address: "".to_string(),
+            date_created: "".to_string(),
+            hash: "".to_string(),
+            prev_hash: "".to_string(),
+            amount: 0.0,
+            public_key: "".to_string(),
+            balance: 0.0,
+        };
+        let pos = chain.chain.len() -1;
+        let block = match chain.chain.get(pos){
+            Some(b)=>{b},
+            None=>{tmp_block}
+        };
+        let mut b = block;
+        let mut balance:f32 = b.balance.clone();
+
 
         return Ok(balance)
     }

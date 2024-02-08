@@ -9,9 +9,12 @@ use serde;
 
 use std::env::current_dir;
 use std::path::Path;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 
 use crate::models::block::{Block, Chain};
+
 
 pub struct KvStore {
     db_address:String,
@@ -108,28 +111,41 @@ impl KvStore {
     //         db_name,
     //     }
     // }
-    pub fn get<'de, T: Deserialize<'de>>(address:String, db_name:String) ->Result<T, Box<dyn Error>>{
+    
+    pub fn get<T: DeserializeOwned>(address:String, db_name:String) ->Result<T, Box<dyn Error>>{
         let wallet_path = format!("{}{}{}",r"\data\",address,r"\");
         let db_path = format!("{}{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path,db_name, ".bin");
         let real_wallet_path = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),wallet_path);
         // read from disk
-        let mut file =match  File::open(db_path){
+        let mut file =match  File::open(db_path.clone()){
             Ok(file)=>{file},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error opening file {}",err.to_string());
+                return Err(err.into())
+            }
         };
-        let mut content:&'static str = "";
+        let mut content = String::new();
 
-        match file.read_to_string(&mut content.to_string()){
+        match file.read_to_string(&mut content){
             Ok(_)=>{},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+
+                error!(" error reading file {}",err.to_string());
+                return Err(err.into())
+            }
         }
+        debug!("db path {}", db_path.clone());
+        debug!("file content {}", content);
+        let m = content.clone();
+
 
 
 
         // decode data
-        let mut chain: T = match  serde_json::from_str(content) {
+        let chain: T = match  serde_json::from_str::<T>(content.as_str()) {
             Ok(data)=>{data},
             Err(err)=>{
+                error!("error parsing data {}",err.to_string());
                 return Err(err.into())
             }
         };

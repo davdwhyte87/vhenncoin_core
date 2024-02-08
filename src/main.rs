@@ -1,10 +1,11 @@
 extern crate core;
 
 use std::env;
-use actix_web::{get, web, App, HttpServer, Responder};
+use std::str::FromStr;
+use actix_web::{rt,get, web, App, HttpServer, Responder};
 use actix_web::web::{Data, resource, route, service};
 
-use log::{info, LevelFilter};
+use log::{debug, error, info, LevelFilter};
 use log4rs::append::console::ConsoleAppender;
 use log4rs::Config;
 use log4rs::config::{Appender, Root};
@@ -20,6 +21,7 @@ use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
+use crate::blockchain::broadcast::get_servers;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::node::Node;
 use crate::blockchain::wallet::Wallet;
@@ -31,7 +33,10 @@ mod req_models;
 mod middlewares;
 
 
-
+use env_file_reader::read_file;
+use std::thread;
+use actix_web::dev::Server;
+use futures_util::future::join_all;
 
 
 #[get("/")]
@@ -45,9 +50,13 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 }
 
 // std::io::Result<()>
-#[actix_web::main]
-async fn main() {
+
+
+
+
+fn main() {
     env::set_var("RUST_BACKTRACE", "full");
+
 
     // let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
     //     Ok(kv_store)=>{kv_store},
@@ -71,11 +80,56 @@ async fn main() {
     let stdout = ConsoleAppender::builder().build();
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Trace))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
         .unwrap();
     let _handle = log4rs::init_config(config).unwrap();
     info!("Starting server..");
-    Node::serve();
+
+    dotenv::dotenv().ok();
+
+
+    get_servers().expect("Erro getting server list");
+    // start http
+    // let http_port = match env::var("HTTP_PORT"){
+    //     Ok(data)=>{data},
+    //     Err(err)=>{
+    //         error!("{}",err);
+    //         "8000".to_string()
+    //     }
+    // };
+    // let srv = HttpServer::new(|| {
+    //     App::new()
+    //         .service(hello)
+    //         .service(route_to_tcp)
+    //
+    // })
+    //     .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+    //     .unwrap()
+    //     .run();
+    //
+    //
+    // let srv_handle = srv.handle();
+    // rt::spawn(srv);
+    // info!("running http server on localhost:{}", http_port);
+    //
+    // srv_handle.stop(false).await;
+    // use futures::executor::block_on;
+    // let mut rt = tokio::runtime::Runtime::new().unwrap();
+    // let local = tokio::task::LocalSet::new();
+    // local.block_on(&mut rt, async move {
+    //     tokio::task::spawn_local( async move  { start_http_server().await });
+    // });
+
+    let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
+    let task = start_http_server();
+    rt.spawn(task);
+    //rt.block_on(task);
+
+   Node::serve();
+    // h_handle.join().unwrap()
+    // start_http_server();
+    // start node tcp server
+
     // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
     // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());
 
@@ -140,4 +194,45 @@ async fn main() {
     //     .bind(("127.0.0.1", 80))?
     //     .run()
     //     .await
+
+
+}
+
+
+//#[actix_web::main]
+#[tokio::main]
+async fn start_http_server()  ->Server{
+    debug!("Stat http func works");
+    let http_port = match env::var("HTTP_PORT"){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "8000".to_string()
+        }
+    };
+    debug!("port number  {}", http_port);
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .service(route_to_tcp)
+
+    })
+        .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+        .unwrap()
+        .run()
+
+
+
+    //let srv_handle = srv.handle();
+    //rt::spawn(srv);
+    //info!("running http server on localhost:{}", http_port);
+
+    //srv_handle.stop(false).await;
+
+}
+
+#[get("/to_tcp/{name}")]
+async fn route_to_tcp(name: web::Path<String>) -> String {
+    debug!("{}", name.to_owned());
+    format!("Hello {:?}!", &name)
 }

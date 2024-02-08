@@ -1,7 +1,8 @@
 use std::borrow::Borrow;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use log::{debug, info};
+use log::{debug, error, info};
+use std::env;
 use serde_json::to_string;
 use crate::handlers::handlers::Handler;
 
@@ -13,8 +14,15 @@ pub struct Node {
 impl Node {
 
     pub fn serve(){
-        let address = "127.0.0.1:8080";
-        let listener = TcpListener::bind(address).unwrap();
+        let port = match env::var("PORT"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        let address =format!("{}{}","127.0.0.1:", port);
+        let listener = TcpListener::bind(address.to_owned()).unwrap();
         info!("Server running {}", address);
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
@@ -39,8 +47,8 @@ impl Node {
                debug!("Create wallet now");
                 Handler::create_wallet(&data_set[1].to_string(), &mut stream)
             },
-            "TRANSFER"=>{
-              Handler::transfer(data_set[1].to_string(), stream.borrow());
+            "Transfer"=>{
+              Handler::transfer(data_set[1].to_string(), &mut stream);
             },
 
             _ => {}
