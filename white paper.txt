@@ -65,3 +65,14 @@ he should only have those 2
 full public key is used to sign message h(pubk1, pubk2,pubk3,pubk4)
 but the receiver cannot sign message because he has only two public keys
 once he uses private key to get public key he can sign the message to make sure
+
+
+node discovery
+we need to keep the network at a reasonable size
+nodelist has a list of nodes
+
+node gets a seed node, it gets all the node list from the seed node and randome other nodes from the seed node, then
+it comes to a consensus on the right node list
+
+all the nodes have an encrypted pass word that they share.
+all the nodes encrypt some data with their public key

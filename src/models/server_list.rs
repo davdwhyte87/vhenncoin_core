@@ -10,5 +10,6 @@ pub struct ServerList {
 pub struct ServerData {
     pub id: String,
     pub ip_address:String,
-    pub public_key:String
+    pub public_key:String,
+    pub http_address:String
 }

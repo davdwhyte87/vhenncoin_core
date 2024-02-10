@@ -1,6 +1,6 @@
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize,Deserialize)]
 pub struct GenericResponse {
     pub message: String,
     pub code:i32

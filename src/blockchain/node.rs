@@ -3,7 +3,10 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use log::{debug, error, info};
 use std::env;
+use hex_literal::len;
+use rand::Rng;
 use serde_json::to_string;
+use crate::blockchain::broadcast::{get_node_list_net, get_servers};
 use crate::handlers::handlers::Handler;
 
 
@@ -58,4 +61,38 @@ impl Node {
         stream.write(response.as_bytes()).unwrap();
         stream.flush().unwrap();
     }
+
+
+    // discover other nodes in the network
+    pub fn discover(){
+        let servers = match  get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err);
+                return
+            }
+        };
+        // sample random 20% of the network
+        let max = servers.len();
+        let number_of_rolls = (20/100)*max;
+
+        let mut i = 0;
+
+        // fetch server list of each initial node
+        while (i < number_of_rolls) {
+            let node_index = rand::thread_rng().gen_range(0..max);
+            let node =match servers.get(node_index) {
+                Some(node)=>{node},
+                None=>{ continue;}
+            };
+
+            // get all the node list in this node
+            let c_server_list = match get_node_list_net(node){
+                Ok(data)=>{data},
+                Err(err)=>{continue;}
+            };
+            i = i+1;
+        }
+    }
+
 }

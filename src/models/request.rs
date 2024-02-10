@@ -19,3 +19,9 @@ pub struct CreateWalletReq {
 }
 
 
+#[derive(Serialize, Deserialize)]
+pub struct GetNodeListReq{
+
+}
+
+
