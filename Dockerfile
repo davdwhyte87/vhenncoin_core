@@ -1,7 +1,7 @@
 FROM rust
 
 RUN mkdir "Vhenn_coin"
-COPY . /bin/Vhenn_coin
+COPY . /Vhenn_coin
 
 RUN cargo build
 
