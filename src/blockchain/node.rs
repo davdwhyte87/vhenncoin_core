@@ -80,6 +80,7 @@ impl Node {
 
         // fetch server list of each initial node
         while (i < number_of_rolls) {
+            // randomly pick 1 out of max number of rolls times from the max bucket
             let node_index = rand::thread_rng().gen_range(0..max);
             let node =match servers.get(node_index) {
                 Some(node)=>{node},
