@@ -88,7 +88,7 @@ fn main() {
     dotenv::dotenv().ok();
 
 
-    get_servers().expect("Erro getting server list");
+    //get_servers().expect("Erro getting server list");
     // start http
     // let http_port = match env::var("HTTP_PORT"){
     //     Ok(data)=>{data},
