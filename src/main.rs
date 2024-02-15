@@ -149,7 +149,7 @@ async fn main() {
                 .service(route_to_tcp)
 
         })
-            .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+            .bind(("0.0.0.0", u16::from_str(http_port.as_str()).unwrap()))
             .unwrap()
             .run()
             .await;
