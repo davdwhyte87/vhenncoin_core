@@ -17,6 +17,7 @@ const ROUTE_NAME: &str = "wallet";
 #[post("wallet/create")]
 pub async fn create_wallet(req_data :Json<CreateWalletReq>) ->HttpResponse
 {
+    // lora rey
     // validate request
     // match req_data.validate() {
     //     Ok(_) => {},
