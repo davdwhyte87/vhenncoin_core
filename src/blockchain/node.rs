@@ -3,10 +3,14 @@ use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use log::{debug, error, info};
 use std::env;
+use std::str::FromStr;
+use actix_web::{App, HttpServer};
+use actix_web::dev::Server;
 use hex_literal::len;
 use rand::Rng;
 use serde_json::to_string;
 use crate::blockchain::broadcast::{get_node_list_net, get_servers};
+use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 
 
@@ -15,6 +19,25 @@ pub struct Node {
 }
 
 impl Node {
+    // #[actix_web::main]
+    pub async fn server_http() -> Server {
+        let http_port = match env::var("PORT"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        debug!("port number  {}", http_port);
+        HttpServer::new(|| {
+            App::new()
+                .service(create_wallet)
+        })
+            .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+            .unwrap()
+            .run()
+    }
+
 
     pub fn serve(){
         let port = match env::var("PORT"){
@@ -48,7 +71,7 @@ impl Node {
 
             "CreateWallet" =>{
                debug!("Create wallet now");
-                Handler::create_wallet(&data_set[1].to_string(), &mut stream)
+                Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream));
             },
             "Transfer"=>{
               Handler::transfer(data_set[1].to_string(), &mut stream);
@@ -58,8 +81,8 @@ impl Node {
         }
         let response = "HTTP/1.1 200 OK\r\n\r\n";
 
-        stream.write(response.as_bytes()).unwrap();
-        stream.flush().unwrap();
+        //stream.write(response.as_bytes()).unwrap();
+        //stream.flush().unwrap();
     }
 
 

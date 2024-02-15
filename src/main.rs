@@ -2,7 +2,7 @@ extern crate core;
 
 use std::env;
 use std::str::FromStr;
-use actix_web::{rt,get, web, App, HttpServer, Responder};
+use actix_web::{rt, get, web, App, HttpServer, Responder, post};
 use actix_web::web::{Data, resource, route, service};
 
 use log::{debug, error, info, LevelFilter};
@@ -37,6 +37,8 @@ use env_file_reader::read_file;
 use std::thread;
 use actix_web::dev::Server;
 use futures_util::future::join_all;
+use crate::handlers::handlers::Handler;
+use crate::models::request::HttpMessage;
 
 
 #[get("/")]
@@ -53,8 +55,8 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 
 
-
-fn main() {
+#[actix_web::main]
+async fn main() {
     env::set_var("RUST_BACKTRACE", "full");
 
 
@@ -129,15 +131,36 @@ fn main() {
         }
     };
     if (http_on == "1"){
-        let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
-        let task = start_http_server();
-        rt.spawn(task);
+        // let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
+        // let task = start_http_server();
+        // rt.spawn(task);
+
+        let http_port = match env::var("PORT"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        debug!("port number  {}", http_port);
+        HttpServer::new(|| {
+            App::new()
+                .service(hello)
+                .service(route_to_tcp)
+
+        })
+            .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+            .unwrap()
+            .run()
+            .await;
+    }else {
+        Node::serve();
     }
 
     //rt.block_on(task);
     
     
-   Node::serve();
+
     // h_handle.join().unwrap()
     // start_http_server();
     // start node tcp server
@@ -243,8 +266,28 @@ async fn start_http_server()  ->Server{
 
 }
 
-#[get("/to_tcp/{name}")]
-async fn route_to_tcp(name: web::Path<String>) -> String {
-    debug!("{}", name.to_owned());
-    format!("Hello {:?}!", &name)
+#[post("/send_message")]
+async fn route_to_tcp(req: String) -> String {
+    let message = req;
+    debug!("{}", message.to_owned());
+    let data = message;
+    debug!("Request Data : {}", data );
+
+    let data_set :Vec<&str>= data.split(r"\n").collect();
+    debug!("action name {}", data_set[0]);
+
+    let mut response = String::new();
+    match data_set[0]{
+
+        "CreateWallet" =>{
+            debug!("Create wallet now");
+            response = Handler::create_wallet(&data_set[1].to_string(), &mut None)
+        },
+        "Transfer"=>{
+            //Handler::transfer(data_set[1].to_string(), &mut None);
+        },
+
+        _ => {}
+    }
+    format!("{:?}", &response)
 }

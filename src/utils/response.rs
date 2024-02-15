@@ -3,6 +3,24 @@ use std::net::TcpStream;
 use log::error;
 use serde::{Deserialize, Serialize};
 
+
+pub struct Response {
+    
+}
+
+impl Response{
+    pub fn string_response<T:Serialize>(response:&T)->String{
+        let resp_string:String = match serde_json::to_string(response){
+            Ok(str)=>{str},
+            Err(r)=>{
+                error!("{}",r.to_string());
+                "".to_string()
+            }
+        };
+        
+        return resp_string;
+    }
+}
 pub struct TCPResponse {
 
 }

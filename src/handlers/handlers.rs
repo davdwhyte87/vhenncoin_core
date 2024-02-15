@@ -1,3 +1,4 @@
+use std::borrow::BorrowMut;
 use std::io::Write;
 use std::net::TcpStream;
 use std::str::FromStr;
@@ -9,7 +10,7 @@ use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::models::request::{CreateWalletReq, TransferReq};
 use crate::models::response::GenericResponse;
-use crate::utils::response::TCPResponse;
+use crate::utils::response::{Response, TCPResponse};
 
 pub struct Handler{
 
@@ -51,13 +52,26 @@ impl Handler {
 
     }
 
-    pub fn create_wallet(message:&String, stream: &mut TcpStream){
+    pub fn http_ceate_wallet(message:&String){
+
+    }
+    pub fn create_wallet(message:&String, stream: &mut Option<TcpStream>)->String{
         // descode message
+        let tcp_stream = match stream{
+            Some(stream)=>{
+
+                true},
+            None=>{false }
+        };
         let mut request: CreateWalletReq = match  serde_json::from_str(message.as_str()) {
             Ok(data)=>{data},
             Err(err)=>{
                 error!("{}",err.to_string());
-                return
+                let response = GenericResponse{
+                    message : "Error creating wallet".to_string(),
+                    code : 0
+                };
+                return Response::string_response(&response)
             }
         };
         debug!("Done decoding message");
@@ -70,8 +84,11 @@ impl Handler {
                     message : "Error creating wallet".to_string(),
                     code : 0
                 };
-                TCPResponse::send_response(&response, stream);
-                return
+                if tcp_stream {
+                    TCPResponse::send_response(&response,  stream.as_mut().unwrap().borrow_mut());
+                }
+
+                return Response::string_response(&response)
             }
         }
 
@@ -80,7 +97,10 @@ impl Handler {
             message : "successfully created wallet".to_string(),
             code : 1
         };
-        TCPResponse::send_response(&response, stream);
-        return;
+        if tcp_stream {
+            TCPResponse::send_response(&response, stream.as_mut().unwrap().borrow_mut());
+        }
+
+        return Response::string_response(&response);
     }
 }

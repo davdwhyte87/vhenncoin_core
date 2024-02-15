@@ -25,3 +25,9 @@ pub struct GetNodeListReq{
 }
 
 
+#[derive(Serialize, Deserialize)]
+pub struct HttpMessage{
+    pub message: String
+}
+
+
