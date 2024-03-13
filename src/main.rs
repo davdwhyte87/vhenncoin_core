@@ -38,6 +38,7 @@ use std::thread;
 use actix_web::dev::Server;
 use futures_util::future::join_all;
 use crate::handlers::handlers::Handler;
+use crate::models::db::MongoService;
 use crate::models::request::HttpMessage;
 
 
@@ -134,6 +135,9 @@ async fn main() {
         // let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
         // let task = start_http_server();
         // rt.spawn(task);
+        let db = MongoService::init().await;
+        
+        let db_data = Data::new(db);
 
         let http_port = match env::var("PORT"){
             Ok(data)=>{data},
@@ -142,6 +146,15 @@ async fn main() {
                 "8000".to_string()
             }
         };
+        let mongodb_on = match env::var("MONGODB_ON"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+
+
         debug!("port number  {}", http_port);
         HttpServer::new(|| {
             App::new()
@@ -284,7 +297,10 @@ async fn route_to_tcp(req: String) -> String {
             response = Handler::create_wallet(&data_set[1].to_string(), &mut None)
         },
         "Transfer"=>{
-            //Handler::transfer(data_set[1].to_string(), &mut None);
+            response = Handler::transfer(data_set[1].to_string(), &mut None);
+        },
+        "GetBalance"=>{
+            response = Handler::get_balalnce(data_set[1].to_string(), &mut None);
         },
 
         _ => {}

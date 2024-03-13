@@ -6,7 +6,7 @@ pub struct ServerList {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ServerData {
     pub id: String,
     pub ip_address:String,

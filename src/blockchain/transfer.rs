@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
 use base64::Engine;
 use uuid::Uuid;
@@ -11,6 +11,7 @@ use futures_util::AsyncReadExt;
 use jsonwebtoken::crypto::sign;
 use log::{debug, error};
 use mongodb::options::AuthMechanism::ScramSha256;
+use mongodb::results::UpdateResult;
 use ring::agreement::{Algorithm, UnparsedPublicKey};
 use ring::error::Unspecified;
 use ring::rand::SystemRandom;
@@ -21,6 +22,8 @@ use rsa::pkcs8::spki::Error::AlgorithmParametersMissing;
 use rsa::traits::SignatureScheme;
 use sha256::digest;
 use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
+use crate::models::db::MongoService;
 use crate::models::request::TransferReq;
 
 
@@ -164,6 +167,103 @@ impl Transfer {
     pub fn make_transfer(){
         
         
+    }
+
+    pub async fn transfer_http(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+        // check if sender and receiver exist
+
+        let mut sender_wallet =match WalletService::get_by_address(&database, sender.to_owned()).await{
+            Ok(sender_wallet)=>{
+               match sender_wallet {
+                   Some(sender_wallet) => { sender_wallet },
+                   None => {return  Err(Box::from("Wallet not found"))}
+               }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if receiver wallet exists
+        let mut receiver_wallet =match WalletService::get_by_address(&database, receiver.to_owned()).await{
+            Ok(receiver_wallet)=>{
+                match receiver_wallet {
+                    Some(receiver_wallet) => { receiver_wallet },
+                    None => {return  Err(Box::from("Wallet not found"))}
+                }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if sender has the correct amount
+        let sender_chain = match sender_wallet.chain.chain.last(){
+            Some(sender_chain)=>{sender_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+        if sender_chain.balance < amount{
+            error!("{}","insufficient funds");
+            return  Err(Box::from("Insufficient funds"))
+        }
+
+        let receiver_chain = match receiver_wallet.chain.chain.last(){
+            Some(receiver_chain)=>{receiver_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+
+        // create new blocks
+        let sender_block = Block{
+            id: Uuid::new_v4().to_string(),
+            sender_address: sender.to_owned(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "sender_h".parse().unwrap(),
+            amount: amount.clone(),
+            prev_hash :"".to_string(),
+            public_key: sender_wallet.public_key.to_owned(),
+            balance : sender_chain.balance.to_owned() - amount.clone()
+        };
+        // create add block for receiver
+        let receiver_block = Block{
+            id: Uuid::new_v4().to_string(),
+            sender_address: sender.to_owned(),
+            prev_hash :"".to_string(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "receiver_h".parse().unwrap(),
+            amount: amount.clone(),
+            public_key: receiver_wallet.public_key.to_owned(),
+            balance : receiver_chain.balance.to_owned() + amount
+        };
+
+        // add new blocks to chain
+        sender_wallet.chain.chain.push(sender_block);
+        receiver_wallet.chain.chain.push(receiver_block);
+
+        // save new wallet data
+        let sup_res = WalletService::update(&database, sender, &sender_wallet).await;
+        let rup_res =  WalletService::update(&database, receiver, &receiver_wallet).await;
+
+        match sup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+
+        match  rup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+        return Ok(())
     }
     // transfer value from one wallet to another
     pub fn transfer(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{

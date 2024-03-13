@@ -3,8 +3,9 @@ use std::env::current_dir;
 use std::error::Error;
 use std::fmt::format;
 use sha2::{Sha256, Digest};
-use std::{fs, str};
+use std::{env, fs, str};
 use std::fs::{File, OpenOptions, read};
+use std::future::Future;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::ptr::null;
@@ -30,9 +31,12 @@ use uuid::{Uuid, uuid};
 use uuid::Version::Sha1;
 use validator::HasLen;
 use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
 use crate::models::block;
 
 use crate::models::block::{Block, Chain};
+use crate::models::db::{DB, MongoService};
+use crate::models::wallet::{LimitPeriod, MongoWallet};
 use crate::req_models::wallet_requests::CreateWalletReq;
 use crate::utils::time::get_date_time;
 
@@ -53,8 +57,94 @@ impl Wallet {
         }
     }
 
+    pub async fn get_balance_http(address:String)-> Result<f32, Box<dyn Error>> {
+        let mongodb_on = match env::var("MONGODB_ON") {
+            Ok(data) => { data },
+            Err(err) => {
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+        if (mongodb_on == "1") {
+            let mut wallet =match WalletService::get_by_address(&database, address.to_owned()).await{
+                Ok(wallet)=>{
+                    match wallet {
+                        Some(wallet) => { wallet },
+                        None => {return  Err(Box::from("Wallet not found"))}
+                    }
+                },
+                Err(err)=>{return Err(err.into())}
+            };
+
+            let chain = match wallet.chain.chain.last(){
+                Some(chain)=>{chain},
+                None=>{
+                    return  Err(Box::from("Problem with chain"))
+                }
+            };
+            return Ok(chain.balance)
+        }
+
+        return Ok(0.00);
+    }
+    pub async fn create_wallet_http(address:String, public_key:String)-> Result<(), Box<dyn Error>>{
+        let mongodb_on = match env::var("MONGODB_ON"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        if (mongodb_on == "1"){
+
+            let database = match MongoService::get_db(){
+                Some(database)=>{database.db.to_owned()},
+                None=>{return Err(Box::from("No database connection"))}
+            };
+            let mut block =Block{
+                id: Uuid::new_v4().to_string(),
+                sender_address: "000000000".to_string(),
+                receiver_address: address.to_owned(),
+                date_created: "".to_string(),
+                hash: "".to_string(),
+                amount: 100.0,
+                prev_hash:"000000000".to_string(),
+                public_key: "".to_string(),
+                balance: 100.0,
+            };
+            let wallet = MongoWallet{
+                id: Uuid::new_v4().to_string(),
+                address: address.to_owned(),
+                wallet_name: "".to_string(),
+                created_at: "".to_string(),
+                public_key: "".to_string(),
+                is_private: false,
+                transaction_limit: false,
+                transaction_limit_value: 0.0,
+                limit_period: LimitPeriod::Daily,
+                is_vault: false,
+                release_date: "".to_string(),
+                chain: Chain { chain: vec![block] },
+            };
+
+            match WalletService::create(&database, &wallet).await{
+                Ok(_)=>{},
+                Err(err)=>{return Err(err.into())}
+            }
+
+
+            return Ok(())
+        }
+
+        return  Ok(())
+    }
     // create a wallet on the blockchain
     pub fn create_wallet(address:String, public_key:String)->Result<(), Box<dyn Error>>{
+
 
         // create database
         match  KvStore::create_db(address.clone(),"chain".to_string()){

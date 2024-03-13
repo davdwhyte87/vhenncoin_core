@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::collections::HashSet;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use log::{debug, error, info};
@@ -7,11 +8,13 @@ use std::str::FromStr;
 use actix_web::{App, HttpServer};
 use actix_web::dev::Server;
 use hex_literal::len;
+use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
 use crate::blockchain::broadcast::{get_node_list_net, get_servers};
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
+use crate::models::server_list::ServerData;
 
 
 pub struct Node {
@@ -74,7 +77,7 @@ impl Node {
                 Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream));
             },
             "Transfer"=>{
-              Handler::transfer(data_set[1].to_string(), &mut stream);
+              Handler::transfer(data_set[1].to_string(), &mut Some(stream));
             },
 
             _ => {}
@@ -88,6 +91,8 @@ impl Node {
 
     // discover other nodes in the network
     pub fn discover(){
+        let mut rough_node_list:Vec<ServerData> = vec![];
+
         let servers = match  get_servers() {
             Ok(data)=>{data},
             Err(err)=>{
@@ -95,6 +100,7 @@ impl Node {
                 return
             }
         };
+
         // sample random 20% of the network
         let max = servers.len();
         let number_of_rolls = (20/100)*max;
@@ -115,6 +121,16 @@ impl Node {
                 Ok(data)=>{data},
                 Err(err)=>{continue;}
             };
+            //add each item in the remote server list the rough list
+            for s in c_server_list{
+                rough_node_list.push(s)
+            }
+
+            // sort the rough list for unique enteries
+            rough_node_list.sort();
+            let m = rough_node_list.into_iter().unique();
+
+
             i = i+1;
         }
     }

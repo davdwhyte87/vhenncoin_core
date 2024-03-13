@@ -6,7 +6,13 @@ pub struct TransferReq {
     pub sender: String,
     pub receiver: String,
     pub amount: String,
-  
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetBalanceReq {
+
+    pub address: String,
+
 }
 
 
