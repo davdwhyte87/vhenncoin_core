@@ -91,6 +91,14 @@ async fn main() {
     dotenv::dotenv().ok();
 
 
+    // discover other nodes
+    match Node::discover().await{
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("discovery error .... {}", err)
+        }
+    }
+
     //get_servers().expect("Erro getting server list");
     // start http
     // let http_port = match env::var("HTTP_PORT"){
@@ -302,8 +310,14 @@ async fn route_to_tcp(req: String) -> String {
         "GetBalance"=>{
             response = Handler::get_balalnce(data_set[1].to_string(), &mut None);
         },
+        "GetNodeList"=>{
+            // get all server nodes
+            debug!("Handling node request");
+            response = Handler::get_servers();
+            debug!("{}", response);
+        },
 
         _ => {}
     }
-    format!("{:?}", &response)
+    response
 }

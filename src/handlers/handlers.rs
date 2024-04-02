@@ -1,12 +1,14 @@
 use std::borrow::BorrowMut;
-use std::env;
-use std::io::Write;
+use std::env::{self, current_dir};
+use std::fs::File;
+use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::str::FromStr;
 use futures::executor::block_on;
 use futures_util::future::err;
 use log::{debug, error};
 use tokio::runtime::Runtime;
+use crate::blockchain::broadcast::get_servers;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::Wallet;
@@ -14,6 +16,7 @@ use crate::models::block::{Block, Chain};
 use crate::models::request::{CreateWalletReq, GetBalanceReq, TransferReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse};
 use crate::utils::response::{Response, TCPResponse};
+use crate::utils::struct_h::Struct_H;
 
 pub struct Handler{
 
@@ -152,6 +155,7 @@ impl Handler {
     }
 
     pub fn create_wallet(message:&String, stream: &mut Option<TcpStream>)->String{
+
         // descode message
         let tcp_stream = match stream{
             Some(stream)=>{
@@ -227,5 +231,61 @@ impl Handler {
 
         return Response::string_response(&response);
     }
+
+
+    pub fn get_servers()->String{
+        let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
+        debug!("serverlist file path {}",data_path);
+        let mut file =match  File::open(data_path.clone()){
+            Ok(file)=>{file},
+            Err(err)=>{
+                error!("error opening file {}",err.to_string());
+                let response = GenericResponse{
+                    message : "Error fetching server list".to_string(),
+                    code : 0
+                };
+                return format!("0{}{}",r"\n","Error fetching server list");
+            } 
+        };
+        let mut content = String::new();
+    
+        match file.read_to_string(&mut content){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!(" error reading file {}",err.to_string());
+                let response = GenericResponse{
+                    message : "Error fetching server list".to_string(),
+                    code : 0
+                };
+                return format!("0{}{}",r"\n","Error fetching server list");
+            }
+        }
+
+        // let response = GenericResponse{
+        //     message : content,
+        //     code : 1
+        // };
+        
+        
+        return format!("1 {}{}",r"\n",content);
+
+        // let servers = get_servers();
+        // let servers = match servers{
+        //     Ok(servers)=>{servers},
+        //     Err(err)=>{
+        //         error!("{:?}",err);
+        //         let response = GenericResponse{
+        //             message : "Error fetching server list".to_string(),
+        //             code : 0
+        //         };
+        //         return Response::string_response(&response)
+        //     }
+        // };
+
+        // let res = Struct_H::vec_to_string(servers);
+        // return res
+
+    }
+
 }
 

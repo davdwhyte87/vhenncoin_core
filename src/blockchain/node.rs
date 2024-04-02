@@ -1,9 +1,15 @@
 use std::borrow::Borrow;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::error::Error;
+use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use chrono::format::StrftimeItems;
+use futures::executor::block_on;
+use futures::{FutureExt, TryFutureExt};
 use log::{debug, error, info};
-use std::env;
+
+use std::env::{self, current_dir};
 use std::str::FromStr;
 use actix_web::{App, HttpServer};
 use actix_web::dev::Server;
@@ -11,7 +17,7 @@ use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
-use crate::blockchain::broadcast::{get_node_list_net, get_servers};
+use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_servers};
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
@@ -89,15 +95,19 @@ impl Node {
     }
 
 
+
+    // talks to other nodes and gets their node list, compares and establishes a truthful list
     // discover other nodes in the network
-    pub fn discover(){
+    pub async fn discover()->Result<(), Box<dyn Error>>{
+        info!("Starting node discovery");
+        
         let mut rough_node_list:Vec<ServerData> = vec![];
 
         let servers = match  get_servers() {
             Ok(data)=>{data},
             Err(err)=>{
                 error!("{}", err);
-                return
+                return Err(err.into())
             }
         };
 
@@ -108,31 +118,91 @@ impl Node {
         let mut i = 0;
 
         // fetch server list of each initial node
-        while (i < number_of_rolls) {
+        for node in servers {
             // randomly pick 1 out of max number of rolls times from the max bucket
-            let node_index = rand::thread_rng().gen_range(0..max);
-            let node =match servers.get(node_index) {
-                Some(node)=>{node},
-                None=>{ continue;}
-            };
+            // let node_index = rand::thread_rng().gen_range(0..max);
+            // let node =match servers.get(node_index) {
+            //     Some(node)=>{node},
+            //     None=>{ continue;}
+            // };
 
             // get all the node list in this node
-            let c_server_list = match get_node_list_net(node){
-                Ok(data)=>{data},
-                Err(err)=>{continue;}
+            // let c_server_list=  block_on(async {get_node_list_http(&node).await});
+            let c_server_list = get_node_list_http(&node).await;
+            let c_server_list =match c_server_list {
+                Ok(cs)=>{cs},
+                Err(err)=>{
+                    error!("{}", err);
+                    return Err(err.into())
+                }
             };
+
             //add each item in the remote server list the rough list
             for s in c_server_list{
-                rough_node_list.push(s)
+                rough_node_list.push(s);
             }
-
-            // sort the rough list for unique enteries
-            rough_node_list.sort();
-            let m = rough_node_list.into_iter().unique();
-
 
             i = i+1;
         }
+
+
+        // second level iteration. Going over all sync nodes childeren nodes
+        for node in rough_node_list.to_owned() {
+
+            // get all the node list in this node
+            // let c_server_list=  block_on(async {get_node_list_http(&node).await});
+            let c_server_list = get_node_list_http(&node).await;
+            let c_server_list =match c_server_list {
+                Ok(cs)=>{cs},
+                Err(err)=>{
+                    error!("{}", err);
+                    vec![]
+                    //return Err(err.into())
+                }
+            };
+
+            //add each item in the remote server list the rough list
+            for s in c_server_list{
+                rough_node_list.push(s);
+            }
+
+            i = i+1;
+        }
+        
+        // sort the rough list for unique enteries
+        //rough_node_list.sort();
+        let m: Vec<ServerData>= rough_node_list.into_iter().unique()
+        .map(|servers| servers)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    debug!("sorted final data .. {:?}", m);
+
+    // write the discovered nodes into the serverlist 
+    // let data_string:String = serde_json::json!(m).to_string();
+
+    // {
+        // Ok(data_string) => {data_string}
+        // Err(err) => {return Err(err.into()) }
+    // };
+
+    // let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
+    // debug!("serverlist file path {}",data_path);
+    // let file = File::options().write(true).open(data_path);
+    // let mut file =match file {
+    //     Ok(file) => { file },
+    //     Err(err) => { return Err(err.into()) }
+    // };
+    // let write_ok = file.write_all(data_string.as_bytes());
+    // let write_ok = match write_ok{
+    //     Ok(write_ok)=>{write_ok},
+    //     Err(err) => { return Err(err.into()) }
+    // };
+
+
+    Ok(())
+
     }
 
 }

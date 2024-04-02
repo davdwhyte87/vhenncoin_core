@@ -2,11 +2,7 @@
   {
     "id": "",
     "ip_address": "",
-    "public_key": ""
-  },
-  {
-    "id": "",
-    "ip_address": "",
-    "public_key": ""
+    "public_key": "",
+    "http_address":"http://127.0.0.1:200"
   }
 ]

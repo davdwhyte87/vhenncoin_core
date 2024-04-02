@@ -2,11 +2,14 @@
   {
     "id": "",
     "ip_address": "",
-    "public_key": ""
+    "public_key": "",
+    "http_address":"http://0.0.0.0:300"
   },
   {
     "id": "",
     "ip_address": "",
-    "public_key": ""
+    "public_key": "",
+    "http_address":"http://0.0.0.0:400"
   }
+ 
 ]

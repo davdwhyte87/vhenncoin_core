@@ -1,8 +1,8 @@
 echo " Hello deploying locally to 4 servers"
 
 cargo build
-set @src=C:\Users\david\Documents\projects\Rust Projects\vhenn_coin\target\debug\Vhenn_coin.exe
-set @dst=C:\Users\david\Documents\projects\Rust Projects\vhenn_coin\test_servers\
+set @src=C:\Users\Whyte-John\Documents\projects\vhenn_coin\target\debug\Vhenn_coin.exe
+set @dst=C:\Users\Whyte-John\Documents\projects\vhenn_coin\test_servers\
 
 echo %@dst%
 xcopy /y "%@src%" "%@dst%server1"
