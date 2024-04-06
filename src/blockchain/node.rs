@@ -17,7 +17,7 @@ use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
-use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_servers};
+use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_servers, save_server_list};
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
@@ -180,8 +180,14 @@ impl Node {
     debug!("sorted final data .. {:?}", m);
 
     // write the discovered nodes into the serverlist 
-    // let data_string:String = serde_json::json!(m).to_string();
+    let data_string:String = serde_json::json!(m).to_string();
 
+    match save_server_list(data_string){
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("{}", err)
+        }
+    };
     // {
         // Ok(data_string) => {data_string}
         // Err(err) => {return Err(err.into()) }

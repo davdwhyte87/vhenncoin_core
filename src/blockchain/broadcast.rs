@@ -79,7 +79,7 @@ pub async fn get_node_list_http(server_data:&ServerData)->Result<Vec<ServerData>
     let mut resp =match resp {
         Ok(resp)=>{resp},
         Err(err)=>{
-            error!("{}", err);
+            error!("Request error ... {}", err);
             return Err(err.into())
         }
     };
@@ -124,7 +124,7 @@ pub async fn get_node_list_http(server_data:&ServerData)->Result<Vec<ServerData>
         }
     };
 
-    debug!("node list  ..{:?}", node_list);
+    debug!("node list  ...{:?}", node_list);
 
     //let node_list = vec![ServerData{ id: "".to_string(), ip_address: "".to_string(), public_key: "".to_string(), http_address:"".to_string() }];
     Ok(node_list)
