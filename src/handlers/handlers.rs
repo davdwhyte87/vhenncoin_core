@@ -8,13 +8,14 @@ use futures::executor::block_on;
 use futures_util::future::err;
 use log::{debug, error};
 use tokio::runtime::Runtime;
-use crate::blockchain::broadcast::get_servers;
+use crate::blockchain::broadcast::{get_servers, save_server_list};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
-use crate::models::request::{CreateWalletReq, GetBalanceReq, TransferReq};
+use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, TransferReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse};
+use crate::models::server_list::ServerData;
 use crate::utils::response::{Response, TCPResponse};
 use crate::utils::struct_h::Struct_H;
 
@@ -285,6 +286,53 @@ impl Handler {
         // let res = Struct_H::vec_to_string(servers);
         // return res
 
+    }
+
+
+    // add new node to list of nodes in server list
+    // later to be moved to Node struct
+    pub fn add_node(message:String)->String{
+        let mut request: AddNodeReq = match  serde_json::from_str(message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("persing message {}",err.to_string());
+                return format!("0{}{}",r"\n","Error persing message");
+                // AddNodeReq{ id: todo!(), ip_address: todo!(), public_key: todo!(), http_address: todo!() }
+                // return Response::string_response(&response)
+            }
+        }; 
+
+        let new_server_data = ServerData{
+            ip_address :request.ip_address,
+            id: request.id,
+            http_address:request.http_address,
+            public_key: request.public_key
+        };
+
+        // get local node server list
+        let mut  node_list = match get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+            
+                error!("fetching server list {}", err);
+                return format!("0{}{}",r"\n","Error fetching server list");
+            }
+            
+        };
+
+        // add new node 
+        node_list.push(new_server_data);
+
+        let data_string:String = serde_json::json!(node_list).to_string();
+        // save to disk
+        match save_server_list(data_string){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("saving list to disk {}", err);
+                return format!("0{}{}",r"\n","Error saving data");
+            }
+        };
+        return format!("1 {}{}",r"\n","Node added successfully");
     }
 
 }

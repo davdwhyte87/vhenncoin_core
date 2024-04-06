@@ -164,6 +164,39 @@ pub fn get_node_list_net(server_data:&ServerData)->Result<Vec<ServerData>, Box<d
     }
 }
 
+pub async fn  notify_new_node_http(server_data:&ServerData)->Result<(), Box<dyn Error> >{
+    let url =format!("{}/send_message", server_data.http_address.to_owned());
+    let mut c = awc::Client::default();
+    debug!("{}", url);
+
+    let resp = c.post(url.clone()).send_body("AddNode").await;
+    let mut resp =match resp {
+        Ok(resp)=>{resp},
+        Err(err)=>{
+            error!("Request error ... {}", err);
+            return Err(err.into())
+        }
+    };
+    let bytese = resp.body().await;
+    let bytese =match bytese {
+        Ok(bytese)=>{bytese},
+        Err(err)=>{
+            error!("{}", err);
+            return Err(err.into())
+        }
+    };
+    let body = from_utf8(&bytese).unwrap().to_string();
+    debug!("AWC RESPO {:?}",body);
+
+    let response_body = body;
+    debug!("Req Body : {}", response_body);
+
+    
+    let data_set :Vec<&str>= response_body.split(r"\n").collect();
+
+    Ok(())
+}
+
 pub fn broadcast_request(message:String, ip_address:String){
     // get all servers
     match TcpStream::connect(ip_address) {

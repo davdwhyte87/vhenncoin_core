@@ -7,6 +7,7 @@ use std::net::{TcpListener, TcpStream};
 use chrono::format::StrftimeItems;
 use futures::executor::block_on;
 use futures::{FutureExt, TryFutureExt};
+use lettre::transport::smtp::commands::Data;
 use log::{debug, error, info};
 
 use std::env::{self, current_dir};
@@ -21,6 +22,8 @@ use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_se
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
+
+use super::broadcast::notify_new_node_http;
 
 
 pub struct Node {
@@ -209,6 +212,26 @@ impl Node {
 
     Ok(())
 
+    }
+
+
+
+    // this helps servers in this nodes server list know about it. 
+    pub async fn  notify_servers_of_new_node()->Result<(), Box<dyn Error>>{
+        let servers = match get_servers(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err);
+                vec![]
+            }
+        };
+
+        // we send all servers in the list a notification of this new node
+        // we do not care much what the response is. maybe later we can cache failed requests and try again..
+        for server in  servers{
+            let r = notify_new_node_http(&server).await;
+        }
+        Ok(())
     }
 
 }

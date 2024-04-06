@@ -7,7 +7,7 @@ use actix_web::web::{Data, resource, route, service};
 
 use log::{debug, error, info, LevelFilter};
 use log4rs::append::console::ConsoleAppender;
-use log4rs::Config;
+use log4rs::{Config, Handle};
 use log4rs::config::{Appender, Root};
 
 mod controllers;
@@ -96,6 +96,14 @@ async fn main() {
         Ok(_)=>{},
         Err(err)=>{
             error!("discovery error .... {}", err)
+        }
+    }
+
+    // notify nodes of new server in the network
+    match Node::notify_servers_of_new_node().await {
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("notify nodes {}", err)
         }
     }
 
@@ -315,6 +323,9 @@ async fn route_to_tcp(req: String) -> String {
             debug!("Handling node request");
             response = Handler::get_servers();
             debug!("{}", response);
+        },
+        "AddNode"=>{
+            response = Handler::add_node(data_set[1].to_string());
         },
 
         _ => {}

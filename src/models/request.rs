@@ -26,6 +26,15 @@ pub struct CreateWalletReq {
 
 
 #[derive(Serialize, Deserialize)]
+pub struct AddNodeReq{
+    pub id: String,
+    pub ip_address:String,
+    pub public_key:String,
+    pub http_address:String
+}
+
+
+#[derive(Serialize, Deserialize)]
 pub struct GetNodeListReq{
 
 }
