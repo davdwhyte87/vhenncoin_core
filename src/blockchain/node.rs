@@ -226,10 +226,12 @@ impl Node {
             }
         };
 
+        let new_node = ServerData{ id: "".to_string(), ip_address: "".to_string(), public_key: "".to_string(), http_address: "".to_string() };
+
         // we send all servers in the list a notification of this new node
         // we do not care much what the response is. maybe later we can cache failed requests and try again..
         for server in  servers{
-            let r = notify_new_node_http(&server).await;
+            let r = notify_new_node_http(&server, &new_node).await;
         }
         Ok(())
     }

@@ -164,12 +164,22 @@ pub fn get_node_list_net(server_data:&ServerData)->Result<Vec<ServerData>, Box<d
     }
 }
 
-pub async fn  notify_new_node_http(server_data:&ServerData)->Result<(), Box<dyn Error> >{
+pub async fn  notify_new_node_http(server_data:&ServerData, new_node:&ServerData)->Result<(), Box<dyn Error> >{
     let url =format!("{}/send_message", server_data.http_address.to_owned());
     let mut c = awc::Client::default();
     debug!("{}", url);
 
-    let resp = c.post(url.clone()).send_body("AddNode").await;
+    // prepare new node to string
+    let nn_string = match serde_json::to_string(new_node){
+        Ok(new_node_string)=>{new_node_string},
+        Err(err)=>{
+            error!("Request error ... {}", err);
+            return Err(err.into())
+        }
+    };
+
+    let request_string =  format!("AddNode{}{}",r"\n",nn_string);
+    let resp = c.post(url.clone()).send_body(request_string).await;
     let mut resp =match resp {
         Ok(resp)=>{resp},
         Err(err)=>{
