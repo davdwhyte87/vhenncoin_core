@@ -218,6 +218,7 @@ impl Node {
 
     // this helps servers in this nodes server list know about it. 
     pub async fn  notify_servers_of_new_node()->Result<(), Box<dyn Error>>{
+        debug!("{}","Starting notify servers of new node .....");
         let servers = match get_servers(){
             Ok(data)=>{data},
             Err(err)=>{
@@ -225,8 +226,20 @@ impl Node {
                 vec![]
             }
         };
-
-        let new_node = ServerData{ id: "".to_string(), ip_address: "".to_string(), public_key: "".to_string(), http_address: "".to_string() };
+        // get node address
+        let http_address = match env::var("HTTP_ADDRESS"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        let new_node = ServerData{ 
+            id: "".to_string(),
+             ip_address: "".to_string(),
+              public_key: "".to_string(), 
+              http_address: http_address
+             };
 
         // we send all servers in the list a notification of this new node
         // we do not care much what the response is. maybe later we can cache failed requests and try again..

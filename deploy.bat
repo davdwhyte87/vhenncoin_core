@@ -10,7 +10,7 @@ xcopy /y "%@src%" "%@dst%server2"
 xcopy /y "%@src%" "%@dst%server3"
 xcopy /y "%@src%" "%@dst%server4"
 
-start cmd.exe /k "title server1 & cd %@dst%server1 & Vhenn_coin.exe"
+@REM start cmd.exe /k "title server1 & cd %@dst%server1 & Vhenn_coin.exe"
 start cmd.exe /k "title server2 & cd %@dst%server2 & Vhenn_coin.exe"
 start cmd.exe /k "title server3 & cd %@dst%server3 & Vhenn_coin.exe"
 start cmd.exe /k "title server4 & cd %@dst%server4 & Vhenn_coin.exe"

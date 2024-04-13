@@ -323,7 +323,14 @@ impl Handler {
         // add new node 
         node_list.push(new_server_data);
 
-        let data_string:String = serde_json::json!(node_list).to_string();
+        // let data_string:String = serde_json::json!(node_list).to_string();
+        let data_string = match serde_json::to_string(&node_list){
+            Ok(new_node_string)=>{new_node_string},
+            Err(err)=>{
+                error!("Request error ... {}", err);
+                return  format!("0{}{}",r"\n","Error converting to string");
+            }
+        };
         // save to disk
         match save_server_list(data_string){
             Ok(_)=>{},
