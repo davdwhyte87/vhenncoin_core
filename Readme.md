@@ -1,5 +1,5 @@
 # Vhenn_coin
- digital payment network for the internet
+ digital payment network for the Internet
 
 It is difficult and expensive to get payments 
 done over the internet. Imagine you wanted to pay 
@@ -11,25 +11,14 @@ and we hope the internet and creatives will adopt
 it in their software applications.
 
 
-# Key Features 
-Miners
-- Miner should be able to set up a new node with public and private key
-- Miner should be able to set up wallet have a wallet
-- Miner should be able to get transaction fees
-- Miner should be able to stake coins
-
- User
-- The user should be able to create a wallet
-- User should be able to transfer coins
-- User can view the balance
-
- Node
-- Consensus on balance
-  Node should broadcast transactions
-  Node should have keys pub and priv
-  Node discovery
-  Node rate limit
-  KV store concurrency
+# The protocol
+kuracoin is built on the tcp protocol primarily, but has an http layer. Miners can configure a node to choose which type of network base protocol they want. 
+Our main protocol for communication is text based. Servers exchange encrypted text. 
+Message format: 
+Action name (GetWalletBalance etc..)
+Data ( {"address":"xxxxxxxx", "wallet_type":"0"}  for example or "UIOJNDJNKABA 988 u#*udCAHOUI Y (&*Y@YFIHudhjkdssdkjsb yt8uygbshbdf" for encrypted data)
+Message Signature
+Node public key 
 
 
 
