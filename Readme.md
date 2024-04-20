@@ -1,20 +1,37 @@
-# Vhenn_coin
- digital payment network for the internet
+# Kuracoin
+ digital payment network for the Internet. 
 
 It is difficult and expensive to get payments 
 done over the internet. Imagine you wanted to pay 
 a blogger $0.1 for reading a post. We believe that
 there is a need for an internet currency. 
 
-We have developed this payment network using rust
-and we hope the internet and creatives will adopt
-it in their software applications.
+Kuracoin is a decentralized payment network for the new 
+financial system built on love. 
 
 
-# Key Features 
-- Proof of stake 
-- Data prooning
+# The protocol
+kuracoin is built on the tcp protocol primarily, but has an http layer. Miners can configure a node to choose which type of network base protocol they want. 
+Our main protocol for communication is text based. Servers exchange encrypted text. 
+Message format: 
+- **Action name**(GetWalletBalance etc..)
+- **Data** ( {"address":"xxxxxxxx", "wallet_type":"0"}  for example or "UIOJNDJNKABA 988 u#*udCAHOUI Y (&*Y@YFIHudhjkdssdkjsb yt8uygbshbdf" for encrypted data)
+- **Message Signature**
+- **Sender Node public key** 
 
 
+# Testing 
+You can test the code in development by running:
+- Windowns:
+deploy.bat 
+You will need a folder called test_servers. This folder contains 
+nodes which have their own folder "server1, server2, ...". 
+- Linux:
+XXXXXXXXXX
+
+Once you have raised a PR and it is approved, it will be moreged into development. 
+The development environment is wired to a test network. 
+If all test passes on development branch, we package a bunch of new features, bug fixes, and launch a release. 
+Releases are not done frequently because of the nature of the technology and it's application in finance. 
 
 
