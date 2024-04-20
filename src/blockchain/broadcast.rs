@@ -5,7 +5,9 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::str::from_utf8;
+use std::time::Duration;
 use std::vec;
+use actix_web::http;
 use log::{debug, error};
 use reqwest::header::CONTENT_TYPE;
 use crate::models::response::GenericResponse;
@@ -221,4 +223,59 @@ pub fn broadcast_request(message:String, ip_address:String){
             return
         }
     }
+}
+
+
+// this sends a request to other servers in the network about a new transaction 
+pub async  fn  broadcast_request_http(action_name:String, message:String){
+
+    // get servers to broadcast to 
+    let servers = match get_servers(){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("Error getting servers ... {}", err);
+            return ;
+        }
+    };
+
+
+    for server in servers {
+        let url =format!("{}/send_message", server.http_address);
+        let mut c = awc::Client::default();
+        debug!("{}", url);
+
+        let request_data = format!("{}{}{}{}{}{}{}{}{}",
+        action_name,
+        r"\n",
+        message,
+         r"\n",
+        "message signature",
+        r"\n",
+        "public key",
+        r"\n",
+        "1"
+    );
+        debug!("request message {}", request_data);
+        let resp = c.post(url.clone()).timeout(Duration::from_secs(1)).send_body(request_data).await;
+        let mut resp =match resp {
+            Ok(resp)=>{resp},
+            Err(err)=>{
+                error!("Request error ... {}", err);
+                continue; 
+            }
+        };
+        
+        let bytese = resp.body().await;
+        let bytese =match bytese {
+            Ok(bytese)=>{bytese},
+            Err(err)=>{
+                error!("{}", err);
+                return
+            }
+        };
+        let body = from_utf8(&bytese).unwrap().to_string();
+        debug!("AWC RESPO {:?}",body);
+    }
+
+    
 }

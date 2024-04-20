@@ -21,7 +21,7 @@ use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
-use crate::blockchain::broadcast::get_servers;
+use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::node::Node;
 use crate::blockchain::wallet::Wallet;
@@ -303,14 +303,34 @@ async fn route_to_tcp(req: String) -> String {
     debug!("Request Data : {}", data );
 
     let data_set :Vec<&str>= data.split(r"\n").collect();
-    debug!("action name {}", data_set[0]);
+    debug!("raw action name {}", data_set[0]);
 
     let mut response = String::new();
-    match data_set[0]{
+    let action_name = data_set.get(0);
+    let action_name = match action_name {
+        Some(data)=>{data},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No action name");
+        }
+    };
+    let is_broadcasted = match data_set.get(4){
+        Some(data)=>{data.to_string()},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No is broadcasted");
+        } 
+    };
+
+    debug!("action name {}", action_name);
+    debug!(" is broadcasted {}", is_broadcasted);
+    match *action_name{
 
         "CreateWallet" =>{
             debug!("Create wallet now");
-            response = Handler::create_wallet(&data_set[1].to_string(), &mut None)
+            response = Handler::create_wallet(&data_set[1].to_string(), &mut None, is_broadcasted.clone());
+            if is_broadcasted == "0" {
+                debug!("broadcasting ");
+                broadcast_request_http("CreateWallet".to_string(),data_set[1].to_string()).await
+            }
         },
         "Transfer"=>{
             response = Handler::transfer(data_set[1].to_string(), &mut None);

@@ -14,11 +14,21 @@ financial system built on love.
 kuracoin is built on the tcp protocol primarily, but has an http layer. Miners can configure a node to choose which type of network base protocol they want. 
 Our main protocol for communication is text based. Servers exchange encrypted text. 
 Message format: 
-- **Action name**(GetWalletBalance etc..)
-- **Data** ( {"address":"xxxxxxxx", "wallet_type":"0"}  for example or "UIOJNDJNKABA 988 u#*udCAHOUI Y (&*Y@YFIHudhjkdssdkjsb yt8uygbshbdf" for encrypted data)
-- **Message Signature**
-- **Sender Node public key** 
+- 0 = **Action name**(GetWalletBalance etc..)
+- 1 =  **Data** ( {"address":"xxxxxxxx", "wallet_type":"0"}  for example or "UIOJNDJNKABA 988 u#*udCAHOUI Y (&*Y@YFIHudhjkdssdkjsb yt8uygbshbdf" for encrypted data)
+- 2= **Message Signature**
+- 3 =**Sender Node public key** 
+- 4 = is_broadcasted? This is either 0 or 1 string. It lets the server know if this is a client request or broadcast. 
 
+**Message format for response**
+1. Response code
+2. Message
+
+
+**Response codes**
+0 = Error
+1 = Success
+2 = Background exchange message
 
 # Testing 
 You can test the code in development by running:

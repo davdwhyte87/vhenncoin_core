@@ -8,7 +8,7 @@ use futures::executor::block_on;
 use futures_util::future::err;
 use log::{debug, error};
 use tokio::runtime::Runtime;
-use crate::blockchain::broadcast::{get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_http, get_servers, save_server_list};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::Wallet;
@@ -155,7 +155,7 @@ impl Handler {
 
     }
 
-    pub fn create_wallet(message:&String, stream: &mut Option<TcpStream>)->String{
+    pub fn create_wallet(message:&String, stream: &mut Option<TcpStream>, is_broadcasted:String)->String{
 
         // descode message
         let tcp_stream = match stream{
@@ -230,6 +230,7 @@ impl Handler {
             TCPResponse::send_response(&response, stream.as_mut().unwrap().borrow_mut());
         }
 
+       
         return Response::string_response(&response);
     }
 
@@ -340,6 +341,26 @@ impl Handler {
             }
         };
         return format!("1 {}{}",r"\n","Node added successfully");
+    }
+
+
+    // execute request to create wallet from broadcast 
+    // these requests are usually user requests
+    pub fn receive_create_wallet_http_broadcast_request(message:String)->String{
+        // perse request data
+        let mut request: CreateWalletReq = match  serde_json::from_str(message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("persing message {}",err.to_string());
+                return format!("0{}{}",r"\n","Error persing message");
+                // AddNodeReq{ id: todo!(), ip_address: todo!(), public_key: todo!(), http_address: todo!() }
+                // return Response::string_response(&response)
+            }
+        }; 
+
+
+        return format!("1 {}{}",r"\n","OK");
+
     }
 
 }
