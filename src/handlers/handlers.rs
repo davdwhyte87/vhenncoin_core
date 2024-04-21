@@ -72,11 +72,11 @@ impl Handler {
     }
 
     // transfer ...
-    pub fn transfer(data:String,stream:&mut Option<TcpStream>)->String{
+    pub fn transfer(data:String,stream:&mut Option<TcpStream>, is_broadcasted:String)->String{
         let tcp_stream = match stream{
             Some(stream)=>{
-
-                true},
+                true
+            },
             None=>{false }
         };
         // descode message
@@ -92,6 +92,8 @@ impl Handler {
             }
         };
 
+        debug!("transaction ID {}", request.transaction_id);
+
         let mongodb_on = match env::var("MONGODB_ON"){
             Ok(data)=>{data},
             Err(err)=>{
@@ -102,15 +104,17 @@ impl Handler {
 
         if mongodb_on == "1"{
             let res =block_on(async{
-                Transfer::transfer_http(request.sender.to_owned(), request.receiver.to_owned(), f32::from_str(request.amount.as_str()).unwrap()).await
+                Transfer::transfer_http(request.sender.to_owned(), request.receiver.to_owned(), f32::from_str(request.amount.as_str()).unwrap(),
+            request.transaction_id
+            ).await
             }
             );
             match res {
                 Ok(_)=>{},
                 Err(err)=>{
-                    error!("{}", err.to_string());
+                    error!("transfer error {}", err.to_string());
                     let response = GenericResponse{
-                        message : "Error creating wallet".to_string(),
+                        message : err.to_string(),
                         code : 0
                     };
                     return Response::string_response(&response)

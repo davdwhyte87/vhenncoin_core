@@ -66,4 +66,25 @@ impl WalletService {
             }
         }
     }
+
+
+    pub async fn update_schema(db:&Database) ->Result<UpdateResult, Box<dyn Error>>{
+        let filter = doc! {};
+        let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
+        let new_doc = doc! {
+            "$set": {"chain":{
+                "chain":[{"transaction_id":""}]
+            }
+        }
+        };
+        let updated_doc = collection.update_many(filter,new_doc, None )
+            .await;
+
+        match updated_doc {
+            Ok(updated_doc)=>{return Ok(updated_doc)},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+    }
 }

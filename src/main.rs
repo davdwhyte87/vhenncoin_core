@@ -23,6 +23,7 @@ use blockchain::wallet;
 use blockchain::transfer;
 use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::node::Node;
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
@@ -148,9 +149,11 @@ async fn main() {
         }
     };
     if (http_on == "1"){
+        
         // let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
         // let task = start_http_server();
         // rt.spawn(task);
+
         let db = MongoService::init().await;
         
         let db_data = Data::new(db);
@@ -170,6 +173,23 @@ async fn main() {
             }
         };
 
+        // let database = match MongoService::get_db(){
+        //     Some(database)=>{database.db.to_owned()},
+        //     None=>{return }
+        // };
+
+        // let update_schema_result = WalletService::update_schema(&database).await;
+        // let update_schema_result = match  update_schema_result {
+        //     Ok(_)=>{},
+        //     Err(err)=>{
+        //         error!("error updating schema {}", err);
+               
+        //     }
+            
+        // };
+
+       
+
 
         debug!("port number  {}", http_port);
         HttpServer::new(|| {
@@ -185,6 +205,9 @@ async fn main() {
     }else {
         Node::serve();
     }
+
+
+    
 
     //rt.block_on(task);
     
@@ -320,6 +343,13 @@ async fn route_to_tcp(req: String) -> String {
         } 
     };
 
+    let message = match data_set.get(1){
+        Some(data)=>{data.to_string()},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No message");
+        }   
+    };
+
     debug!("action name {}", action_name);
     debug!(" is broadcasted {}", is_broadcasted);
     match *action_name{
@@ -333,10 +363,14 @@ async fn route_to_tcp(req: String) -> String {
             }
         },
         "Transfer"=>{
-            response = Handler::transfer(data_set[1].to_string(), &mut None);
+            response = Handler::transfer(message.clone(), &mut None, is_broadcasted.clone());
+            if is_broadcasted == "0" {
+                debug!("broadcasting ");
+                broadcast_request_http("Transfer".to_string(),message).await
+            }
         },
         "GetBalance"=>{
-            response = Handler::get_balalnce(data_set[1].to_string(), &mut None);
+            response = Handler::get_balalnce(message.clone(), &mut None);
         },
         "GetNodeList"=>{
             // get all server nodes

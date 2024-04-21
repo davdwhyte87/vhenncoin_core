@@ -169,11 +169,13 @@ impl Transfer {
         
     }
 
-    pub async fn transfer_http(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
+    pub async fn transfer_http(sender:String, receiver:String, amount:f32, transaction_id:String)->Result<(), Box<dyn Error>>{
         let database = match MongoService::get_db(){
             Some(database)=>{database.db.to_owned()},
             None=>{return Err(Box::from("No database connection"))}
         };
+
+
 
         // check if sender and receiver exist
 
@@ -210,6 +212,21 @@ impl Transfer {
             return  Err(Box::from("Insufficient funds"))
         }
 
+        // check if the transaction has occured before
+        for block in &sender_wallet.chain.chain{
+            if (block.transaction_id==transaction_id){
+                return  Err(Box::from("Transaction has been processed"))
+            }
+        }
+        for block in &receiver_wallet.chain.chain{
+            if (block.transaction_id==transaction_id){
+                return  Err(Box::from("Transaction has been processed"))
+            }
+        }
+
+
+
+
         let receiver_chain = match receiver_wallet.chain.chain.last(){
             Some(receiver_chain)=>{receiver_chain},
             None=>{
@@ -220,6 +237,7 @@ impl Transfer {
         // create new blocks
         let sender_block = Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id.clone(),
             sender_address: sender.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
@@ -227,11 +245,13 @@ impl Transfer {
             amount: amount.clone(),
             prev_hash :"".to_string(),
             public_key: sender_wallet.public_key.to_owned(),
-            balance : sender_chain.balance.to_owned() - amount.clone()
+            balance : sender_chain.balance.to_owned() - amount.clone(),
+            trx_h: Some("jooli".to_string())
         };
         // create add block for receiver
         let receiver_block = Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id,
             sender_address: sender.to_owned(),
             prev_hash :"".to_string(),
             receiver_address: receiver.to_owned(),
@@ -239,7 +259,8 @@ impl Transfer {
             hash: "receiver_h".parse().unwrap(),
             amount: amount.clone(),
             public_key: receiver_wallet.public_key.to_owned(),
-            balance : receiver_chain.balance.to_owned() + amount
+            balance : receiver_chain.balance.to_owned() + amount,
+            trx_h: Some("jooli".to_string()),
         };
 
         // add new blocks to chain
@@ -313,6 +334,7 @@ impl Transfer {
 
         let sender_block = Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: sender.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
@@ -320,11 +342,13 @@ impl Transfer {
             amount: amount.clone(),
             prev_hash :"".to_string(),
             public_key: sender_chain.chain.last().unwrap().public_key.clone(),
-            balance : sender_balance - amount.clone()
+            balance : sender_balance - amount.clone(),
+            trx_h: Some("jooli".to_string())
         };
         // create add block for receiver
         let receiver_block = Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: sender.to_owned(),
             prev_hash :"".to_string(),
             receiver_address: receiver.to_owned(),
@@ -332,7 +356,8 @@ impl Transfer {
             hash: "receiver_h".parse().unwrap(),
             amount: amount.clone(),
             public_key: sender_chain.chain.last().unwrap().public_key.clone(),
-            balance : receiver_balance + amount
+            balance : receiver_balance + amount,
+            trx_h: Some("jooli".to_string())
         };
 
         sender_chain.chain.push(sender_block);

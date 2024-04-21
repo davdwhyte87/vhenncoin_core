@@ -86,7 +86,7 @@ impl Node {
                 Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream), "0".to_string());
             },
             "Transfer"=>{
-              Handler::transfer(data_set[1].to_string(), &mut Some(stream));
+              Handler::transfer(data_set[1].to_string(), &mut Some(stream), "id".to_string());
             },
 
             _ => {}

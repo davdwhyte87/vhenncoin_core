@@ -107,6 +107,7 @@ impl Wallet {
             };
             let mut block =Block{
                 id: Uuid::new_v4().to_string(),
+                transaction_id: "000000000".to_string(),
                 sender_address: "000000000".to_string(),
                 receiver_address: address.to_owned(),
                 date_created: "".to_string(),
@@ -115,6 +116,7 @@ impl Wallet {
                 prev_hash:"000000000".to_string(),
                 public_key: "".to_string(),
                 balance: 100.0,
+                trx_h: Some("jooli".to_string())
             };
             let wallet = MongoWallet{
                 id: Uuid::new_v4().to_string(),
@@ -158,6 +160,7 @@ impl Wallet {
         };
         let mut block =Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: "000000000".to_string(),
             receiver_address: address.to_owned(),
             date_created: "".to_string(),
@@ -166,6 +169,7 @@ impl Wallet {
             prev_hash:"000000000".to_string(),
             public_key: "".to_string(),
             balance: 100.0,
+            trx_h: Some("jooli".to_string())
         };
 
         let hash = digest(format!("{}{}{}{}{}",block.id, block.sender_address,
@@ -283,6 +287,7 @@ impl Wallet {
         // loop through and add all the block amounts
         let tmp_block =&&Block{
             id: "".to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: "".to_string(),
             receiver_address: "".to_string(),
             date_created: "".to_string(),
@@ -291,6 +296,7 @@ impl Wallet {
             amount: 0.0,
             public_key: "".to_string(),
             balance: 0.0,
+            trx_h: Some("jooli".to_string())
         };
         let pos = chain.chain.len() -1;
         let block = match chain.chain.get(pos){

@@ -3,6 +3,7 @@ use serde::{Serialize,Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct TransferReq {
+    pub transaction_id:String,
     pub sender: String,
     pub receiver: String,
     pub amount: String,
