@@ -1,9 +1,14 @@
 extern crate core;
 
 use std::env;
-use actix_web::{get, web, App, HttpServer, Responder};
+use std::str::FromStr;
+use actix_web::{rt, get, web, App, HttpServer, Responder, post};
 use actix_web::web::{Data, resource, route, service};
 
+use log::{debug, error, info, LevelFilter};
+use log4rs::append::console::ConsoleAppender;
+use log4rs::{Config, Handle};
+use log4rs::config::{Appender, Root};
 
 mod controllers;
 use controllers::{
@@ -11,12 +16,15 @@ use controllers::{
 
 };
 mod models;
+mod handlers;
 use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
+use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::node::Node;
+use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
 
@@ -25,7 +33,13 @@ mod req_models;
 mod middlewares;
 
 
-
+use env_file_reader::read_file;
+use std::thread;
+use actix_web::dev::Server;
+use futures_util::future::join_all;
+use crate::handlers::handlers::Handler;
+use crate::models::db::MongoService;
+use crate::models::request::HttpMessage;
 
 
 #[get("/")]
@@ -39,29 +53,147 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 }
 
 // std::io::Result<()>
+
+
+
 #[actix_web::main]
 async fn main() {
     env::set_var("RUST_BACKTRACE", "full");
 
-    let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
-        Ok(kv_store)=>{kv_store},
-        Err(err)=>{return println!("{}",err.to_string())}
-    };
-    let chain = Chain{ chain: vec![Block{
-        id: "hcb d n".to_string(),
-        sender_address: "sender".to_string(),
-        receiver_address: "".to_string(),
-        date_created: "".to_string(),
-        hash: "jndljvnkfj".to_string(),
-        amount: 0.0,
-        public_key: "".to_string(),
-    }] };
-    match kv_store.save(Some(chain)){
-        Ok(_)=>{println!("successful ")},
-        Err(err)=>{return println!("{}",err.to_string())}
+
+    // let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
+    //     Ok(kv_store)=>{kv_store},
+    //     Err(err)=>{return println!("{}",err.to_string())}
+    // };
+    // let chain = Chain{ chain: vec![Block{
+    //     id: "hcb d n".to_string(),
+    //     sender_address: "sender".to_string(),
+    //     receiver_address: "".to_string(),
+    //     date_created: "".to_string(),
+    //     hash: "jndljvnkfj".to_string(),
+    //     amount: 0.0,
+    //     public_key: "".to_string(),
+    // }] };
+    // match kv_store.save(Some(chain)){
+    //     Ok(_)=>{println!("successful ")},
+    //     Err(err)=>{return println!("{}",err.to_string())}
+    // }
+
+    //Wallet::gen()
+    let stdout = ConsoleAppender::builder().build();
+    let config = Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
+        .unwrap();
+    let _handle = log4rs::init_config(config).unwrap();
+    info!("Starting server..");
+
+    dotenv::dotenv().ok();
+
+
+    // discover other nodes
+    match Node::discover().await{
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("discovery error .... {}", err)
+        }
     }
 
-    //Node::serve();
+    // notify nodes of new server in the network
+    match Node::notify_servers_of_new_node().await {
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("notify nodes {}", err)
+        }
+    }
+
+    //get_servers().expect("Erro getting server list");
+    // start http
+    // let http_port = match env::var("HTTP_PORT"){
+    //     Ok(data)=>{data},
+    //     Err(err)=>{
+    //         error!("{}",err);
+    //         "8000".to_string()
+    //     }
+    // };
+    // let srv = HttpServer::new(|| {
+    //     App::new()
+    //         .service(hello)
+    //         .service(route_to_tcp)
+    //
+    // })
+    //     .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+    //     .unwrap()
+    //     .run();
+    //
+    //
+    // let srv_handle = srv.handle();
+    // rt::spawn(srv);
+    // info!("running http server on localhost:{}", http_port);
+    //
+    // srv_handle.stop(false).await;
+    // use futures::executor::block_on;
+    // let mut rt = tokio::runtime::Runtime::new().unwrap();
+    // let local = tokio::task::LocalSet::new();
+    // local.block_on(&mut rt, async move {
+    //     tokio::task::spawn_local( async move  { start_http_server().await });
+    // });
+
+    // start http server if configed to
+    let http_on = match env::var("HTTP_ON"){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "8000".to_string()
+        }
+    };
+    if (http_on == "1"){
+        // let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
+        // let task = start_http_server();
+        // rt.spawn(task);
+        let db = MongoService::init().await;
+        
+        let db_data = Data::new(db);
+
+        let http_port = match env::var("PORT"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+        let mongodb_on = match env::var("MONGODB_ON"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err);
+                "8000".to_string()
+            }
+        };
+
+
+        debug!("port number  {}", http_port);
+        HttpServer::new(|| {
+            App::new()
+                .service(hello)
+                .service(route_to_tcp)
+
+        })
+            .bind(("0.0.0.0", u16::from_str(http_port.as_str()).unwrap()))
+            .unwrap()
+            .run()
+            .await;
+    }else {
+        Node::serve();
+    }
+
+    //rt.block_on(task);
+    
+    
+
+    // h_handle.join().unwrap()
+    // start_http_server();
+    // start node tcp server
+
     // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
     // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());
 
@@ -126,4 +258,97 @@ async fn main() {
     //     .bind(("127.0.0.1", 80))?
     //     .run()
     //     .await
+
+
+}
+
+
+//#[actix_web::main]
+#[tokio::main]
+async fn start_http_server()  ->Server{
+    debug!("Stat http func works");
+    let http_port = match env::var("HTTP_PORT"){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "8000".to_string()
+        }
+    };
+    debug!("port number  {}", http_port);
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .service(route_to_tcp)
+
+    })
+        .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+        .unwrap()
+        .run()
+
+
+
+    //let srv_handle = srv.handle();
+    //rt::spawn(srv);
+    //info!("running http server on localhost:{}", http_port);
+
+    //srv_handle.stop(false).await;
+
+}
+
+#[post("/send_message")]
+async fn route_to_tcp(req: String) -> String {
+    let message = req;
+    debug!("{}", message.to_owned());
+    let data = message;
+    debug!("Request Data : {}", data );
+
+    let data_set :Vec<&str>= data.split(r"\n").collect();
+    debug!("raw action name {}", data_set[0]);
+
+    let mut response = String::new();
+    let action_name = data_set.get(0);
+    let action_name = match action_name {
+        Some(data)=>{data},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No action name");
+        }
+    };
+    let is_broadcasted = match data_set.get(4){
+        Some(data)=>{data.to_string()},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No is broadcasted");
+        } 
+    };
+
+    debug!("action name {}", action_name);
+    debug!(" is broadcasted {}", is_broadcasted);
+    match *action_name{
+
+        "CreateWallet" =>{
+            debug!("Create wallet now");
+            response = Handler::create_wallet(&data_set[1].to_string(), &mut None, is_broadcasted.clone());
+            if is_broadcasted == "0" {
+                debug!("broadcasting ");
+                broadcast_request_http("CreateWallet".to_string(),data_set[1].to_string()).await
+            }
+        },
+        "Transfer"=>{
+            response = Handler::transfer(data_set[1].to_string(), &mut None);
+        },
+        "GetBalance"=>{
+            response = Handler::get_balalnce(data_set[1].to_string(), &mut None);
+        },
+        "GetNodeList"=>{
+            // get all server nodes
+            debug!("Handling node request");
+            response = Handler::get_servers();
+            debug!("{}", response);
+        },
+        "AddNode"=>{
+            response = Handler::add_node(data_set[1].to_string());
+        },
+
+        _ => {}
+    }
+    response
 }

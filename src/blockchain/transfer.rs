@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
 use base64::Engine;
 use uuid::Uuid;
@@ -9,7 +9,9 @@ use crate::utils::time::get_date_time;
 use base64::engine::general_purpose;
 use futures_util::AsyncReadExt;
 use jsonwebtoken::crypto::sign;
+use log::{debug, error};
 use mongodb::options::AuthMechanism::ScramSha256;
+use mongodb::results::UpdateResult;
 use ring::agreement::{Algorithm, UnparsedPublicKey};
 use ring::error::Unspecified;
 use ring::rand::SystemRandom;
@@ -19,6 +21,9 @@ use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey, pkcs1::DecodeRsaPrivateK
 use rsa::pkcs8::spki::Error::AlgorithmParametersMissing;
 use rsa::traits::SignatureScheme;
 use sha256::digest;
+use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
+use crate::models::db::MongoService;
 use crate::models::request::TransferReq;
 
 
@@ -163,6 +168,103 @@ impl Transfer {
         
         
     }
+
+    pub async fn transfer_http(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+        // check if sender and receiver exist
+
+        let mut sender_wallet =match WalletService::get_by_address(&database, sender.to_owned()).await{
+            Ok(sender_wallet)=>{
+               match sender_wallet {
+                   Some(sender_wallet) => { sender_wallet },
+                   None => {return  Err(Box::from("Wallet not found"))}
+               }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if receiver wallet exists
+        let mut receiver_wallet =match WalletService::get_by_address(&database, receiver.to_owned()).await{
+            Ok(receiver_wallet)=>{
+                match receiver_wallet {
+                    Some(receiver_wallet) => { receiver_wallet },
+                    None => {return  Err(Box::from("Wallet not found"))}
+                }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if sender has the correct amount
+        let sender_chain = match sender_wallet.chain.chain.last(){
+            Some(sender_chain)=>{sender_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+        if sender_chain.balance < amount{
+            error!("{}","insufficient funds");
+            return  Err(Box::from("Insufficient funds"))
+        }
+
+        let receiver_chain = match receiver_wallet.chain.chain.last(){
+            Some(receiver_chain)=>{receiver_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+
+        // create new blocks
+        let sender_block = Block{
+            id: Uuid::new_v4().to_string(),
+            sender_address: sender.to_owned(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "sender_h".parse().unwrap(),
+            amount: amount.clone(),
+            prev_hash :"".to_string(),
+            public_key: sender_wallet.public_key.to_owned(),
+            balance : sender_chain.balance.to_owned() - amount.clone()
+        };
+        // create add block for receiver
+        let receiver_block = Block{
+            id: Uuid::new_v4().to_string(),
+            sender_address: sender.to_owned(),
+            prev_hash :"".to_string(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "receiver_h".parse().unwrap(),
+            amount: amount.clone(),
+            public_key: receiver_wallet.public_key.to_owned(),
+            balance : receiver_chain.balance.to_owned() + amount
+        };
+
+        // add new blocks to chain
+        sender_wallet.chain.chain.push(sender_block);
+        receiver_wallet.chain.chain.push(receiver_block);
+
+        // save new wallet data
+        let sup_res = WalletService::update(&database, sender, &sender_wallet).await;
+        let rup_res =  WalletService::update(&database, receiver, &receiver_wallet).await;
+
+        match sup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+
+        match  rup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+        return Ok(())
+    }
     // transfer value from one wallet to another
     pub fn transfer(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
         
@@ -174,67 +276,92 @@ impl Transfer {
             return Err(Box::from("Wallet does not exist"))
         }
         //check if sender has the money available
-        let sender_chain = match Wallet::get_wallet_chain(&sender){
+        let mut sender_chain = match Wallet::get_wallet_chain(&sender){
             Ok(sender_chian)=>{sender_chian},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!(" error getting chain {}",err.to_string());
+                return Err(err.into())
+            }
+
         };
-        let receiver_chain = match Wallet::get_wallet_chain(&receiver){
+        let mut receiver_chain = match Wallet::get_wallet_chain(&receiver){
             Ok(receiver_chain)=>{receiver_chain},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error getting chain {}",err.to_string());
+                return Err(err.into())
+            }
         };
         let sender_balance = match Wallet::get_balance(&sender){
             Ok(sender_balance)=>{sender_balance},
-            Err(err)=> {return Err(err.into())}
+            Err(err)=> {
+                error!("error getting sender balance {}",err.to_string());
+                return Err(err.into())
+            }
+        };
+        let receiver_balance = match Wallet::get_balance(&receiver){
+            Ok(receiver_balance)=>{receiver_balance},
+            Err(err)=> {
+                error!(" error getting receiver balance {}",err.to_string());
+                return Err(err.into())
+            }
         };
 
         if sender_balance < amount{
             return Err(Box::from("Insufficient funds"))
         }
         // create minus block
-        let sender_h = serde_json::to_string(&sender_chain.borrow().chain.last().unwrap());
-        let sender_h =match sender_h {
-            Ok(json)=>{json},
-            Err(err)=>{
-                return Err(err.into())
-            }
-        };
-        let receiver_h = serde_json::to_string(&receiver_chain.borrow().chain.last().unwrap());
-        let receiver_h =match receiver_h {
-            Ok(json)=>{json},
-            Err(err)=>{
-                return Err(err.into())
-            }
-        };
+
         let sender_block = Block{
             id: Uuid::new_v4().to_string(),
             sender_address: sender.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
-            hash:sender_h,
-            amount: -amount.clone(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone()
+            hash: "sender_h".parse().unwrap(),
+            amount: amount.clone(),
+            prev_hash :"".to_string(),
+            public_key: sender_chain.chain.last().unwrap().public_key.clone(),
+            balance : sender_balance - amount.clone()
         };
         // create add block for receiver
         let receiver_block = Block{
             id: Uuid::new_v4().to_string(),
             sender_address: sender.to_owned(),
+            prev_hash :"".to_string(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
-            hash:receiver_h,
+            hash: "receiver_h".parse().unwrap(),
             amount: amount.clone(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone()
+            public_key: sender_chain.chain.last().unwrap().public_key.clone(),
+            balance : receiver_balance + amount
         };
+
+        sender_chain.chain.push(sender_block);
+        receiver_chain.chain.push(receiver_block);
         // if two blocks are saved well, send response
-        match Wallet::save_block(&sender, sender_block){
+        match KvStore::save(sender.to_owned(), "chain".to_string(), Some(sender_chain)){
             Ok(_)=>{},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error saving {}",err.to_string());
+                return Err(err.into())
+            }
         }
 
-        match Wallet::save_block(&receiver, receiver_block){
+        match KvStore::save(receiver, "chain".to_string(), Some(receiver_chain)){
             Ok(_)=>{},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error saving {}",err.to_string());
+                return Err(err.into())
+            }
         }
 
+        let sender_balance = match Wallet::get_balance(&sender){
+            Ok(sender_balance)=>{sender_balance},
+            Err(err)=> {
+                error!("error getting sender balance {}",err.to_string());
+                return Err(err.into())
+            }
+        };
+        debug!("sender balance {} amount {}",f32::to_string(&sender_balance), amount);
 
         return Ok(())
     }

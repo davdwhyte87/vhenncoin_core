@@ -1,8 +1,8 @@
 FROM rust
 
-RUN mkdir "speedforce_server"
-COPY . /bin/speedforce_server
+RUN mkdir "Vhenn_coin"
+COPY . ./
 
-RUN cargo build
-
-CMD ["./target/hdos_api"]
+RUN cargo build --release
+EXPOSE 8000
+CMD ["./target/Vhenn_coin"]
