@@ -1,5 +1,8 @@
+
 # Kuracoin
  digital payment network for the Internet. 
+
+
 
 It is difficult and expensive to get payments 
 done over the internet. Imagine you wanted to pay 
@@ -10,10 +13,12 @@ Kuracoin is a decentralized payment network for the new
 financial system built on love. 
 
 
+
 # The protocol
 kuracoin is built on the tcp protocol primarily, but has an http layer. Miners can configure a node to choose which type of network base protocol they want. 
 Our main protocol for communication is text based. Servers exchange encrypted text. 
 Message format: 
+
 - 0 = **Action name**(GetWalletBalance etc..)
 - 1 =  **Data** ( {"address":"xxxxxxxx", "wallet_type":"0"}  for example or "UIOJNDJNKABA 988 u#*udCAHOUI Y (&*Y@YFIHudhjkdssdkjsb yt8uygbshbdf" for encrypted data)
 - 2= **Message Signature**
@@ -43,5 +48,6 @@ Once you have raised a PR and it is approved, it will be moreged into developmen
 The development environment is wired to a test network. 
 If all test passes on development branch, we package a bunch of new features, bug fixes, and launch a release. 
 Releases are not done frequently because of the nature of the technology and it's application in finance. 
+
 
 
