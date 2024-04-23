@@ -326,7 +326,12 @@ impl Handler {
         };
 
         // add new node 
-        node_list.push(new_server_data);
+        // check if node exists
+        let has_new_node = node_list.contains(&new_server_data);
+        if !has_new_node {
+            node_list.push(new_server_data);
+        }
+       
 
         // let data_string:String = serde_json::json!(node_list).to_string();
         let data_string = match serde_json::to_string(&node_list){
