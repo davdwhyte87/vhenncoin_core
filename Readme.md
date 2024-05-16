@@ -26,19 +26,19 @@ Message format:
 - 4 = is_broadcasted? This is either 0 or 1 string. It lets the server know if this is a client request or broadcast. 
 
 **Message format for response**
-1. Response code
-2. Message
+- 0 = Response code
+- 1 = Message
+- 2 = Data
 
 
 **Response codes**
-0 = Error
-1 = Success
-2 = Background exchange message
+- 0 = Error
+- 1 = Success
+- 2 = Background exchange message
 
 # Testing 
 You can test the code in development by running:
-- Windowns:
-deploy.bat 
+- Windows: deploy.bat 
 You will need a folder called test_servers. This folder contains 
 nodes which have their own folder "server1, server2, ...". 
 - Linux:
