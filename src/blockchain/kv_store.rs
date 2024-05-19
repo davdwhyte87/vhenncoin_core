@@ -60,7 +60,7 @@ impl KvStore {
             println!("{}", "Path exists".to_string());
             return Err(Box::try_from("Error, wallet exists".to_string()).unwrap());
 
-        }
+        } 
         // let file = File::create(real_path);
         // match file {
         //     Ok(file) => { file },

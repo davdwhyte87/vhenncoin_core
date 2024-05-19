@@ -1,5 +1,7 @@
 use std::error::Error;
-use log::error;
+use futures::TryStreamExt;
+use log::{debug, error};
+use mongodb::options::FindOptions;
 use mongodb::{options::ClientOptions, Client, Database};
 use mongodb::bson::{bson, doc, to_bson, to_document};
 use mongodb::results::{InsertOneResult, UpdateResult};
@@ -37,6 +39,7 @@ impl WalletService {
         }
     }
 
+
     pub async fn get_by_address(db: &Database,address:String)->Result<Option<MongoWallet>, Box<dyn Error>>{
         let filter = doc! {"address":address};
         let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
@@ -49,6 +52,72 @@ impl WalletService {
         };
         Ok(wallet_detail)
     }
+
+    pub async fn get_all_wallet_names(db: &Database)->Result<Vec<String>, Box<dyn Error>>{
+        let filter = doc! {};
+        let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
+        let find_options = FindOptions::builder().projection(doc! { "address": 1 }).build();
+        let wallet_detail = collection.find(filter, None).await;
+        let mut  wallet_detail = match wallet_detail {
+            Ok(user_detail)=>{
+                user_detail
+            },
+            Err(err)=>{
+                debug!("{}", err);
+                return Err(err.into())
+            }
+        };
+        let mut  wallet_names = vec![];
+        
+        while let Ok(Some(result)) =   wallet_detail.try_next().await {
+            
+            wallet_names.push(result.address)
+        }
+
+        Ok(wallet_names)
+    }
+
+    pub async fn get_all_wallets(db: &Database)->Result<Vec<MongoWallet>, Box<dyn Error>>{
+        let filter = doc! {};
+        let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
+        let find_options = FindOptions::builder().projection(doc! { "address": 1 }).build();
+        let wallet_detail = collection.find(filter, None).await;
+        let mut  wallet_detail = match wallet_detail {
+            Ok(user_detail)=>{
+                user_detail
+            },
+            Err(err)=>{
+                debug!("{}", err);
+                return Err(err.into())
+            }
+        };
+        let mut  wallet_names = vec![];
+        
+        while let Ok(Some(result)) =   wallet_detail.try_next().await {
+            
+            wallet_names.push(result)
+        }
+
+        Ok(wallet_names)
+    }
+
+
+    pub async fn get_single_wallet(db: &Database, address:String)->Result<Option<MongoWallet>, Box<dyn Error>>{
+        let filter = doc! {"address":address};
+        let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
+        // let find_options = FindOptions::builder().projection(doc! { "address": 1 }).build();
+        let wallet_detail = collection.find_one(filter, None).await;
+        let mut  wallet_detail = match wallet_detail {
+            Ok(user_detail)=>{
+                user_detail
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+
+
+        Ok(wallet_detail)
+    }
     
     pub async fn update(db:&Database, address:String, wallet:&MongoWallet) ->Result<UpdateResult, Box<dyn Error>>{
         let filter = doc! {"address":address};
@@ -57,6 +126,27 @@ impl WalletService {
             "$set": to_bson(wallet).unwrap()
         };
         let updated_doc = collection.update_one(filter,new_doc, None )
+            .await;
+
+        match updated_doc {
+            Ok(updated_doc)=>{return Ok(updated_doc)},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+    }
+
+
+    pub async fn update_schema(db:&Database) ->Result<UpdateResult, Box<dyn Error>>{
+        let filter = doc! {};
+        let collection = db.collection::<MongoWallet>(COLLECTION_NAME);
+        let new_doc = doc! {
+            "$set": {"chain":{
+                "chain":[{"transaction_id":""}]
+            }
+        }
+        };
+        let updated_doc = collection.update_many(filter,new_doc, None )
             .await;
 
         match updated_doc {

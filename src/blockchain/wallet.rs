@@ -3,7 +3,7 @@ use std::env::current_dir;
 use std::error::Error;
 use std::fmt::format;
 use sha2::{Sha256, Digest};
-use std::{env, fs, str};
+use std::{env, fs, str, vec};
 use std::fs::{File, OpenOptions, read};
 use std::future::Future;
 use std::io::{Read, Write};
@@ -57,6 +57,58 @@ impl Wallet {
         }
     }
 
+    pub async fn get_all_wallet_names()->Result<Vec<String>, Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+        let mut wallets =match WalletService::get_all_wallet_names(&database).await{
+            Ok(wallet)=>{
+               wallet
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        return Ok(wallets)
+    }
+    pub async fn get_all_wallets()->Result<Vec<MongoWallet>, Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+        let mut wallets =match WalletService::get_all_wallets(&database).await{
+            Ok(wallet)=>{
+               wallet
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        return Ok(wallets)
+    }
+    
+    pub async fn get_single_wallet(address:String)->Result<MongoWallet, Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+        let mut wallets =match WalletService::get_single_wallet(&database, address).await{
+            Ok(wallet)=>{
+               match wallet {
+                Some(data)=>{data},
+                None=>{
+                    MongoWallet::default()
+                }
+               }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        return Ok(wallets)
+    }
+
     pub async fn get_balance_http(address:String)-> Result<f32, Box<dyn Error>> {
         let mongodb_on = match env::var("MONGODB_ON") {
             Ok(data) => { data },
@@ -91,7 +143,7 @@ impl Wallet {
 
         return Ok(0.00);
     }
-    pub async fn create_wallet_http(address:String, public_key:String)-> Result<(), Box<dyn Error>>{
+    pub async fn create_wallet_http(address:String, public_key:String, password:String)-> Result<(), Box<dyn Error>>{
         let mongodb_on = match env::var("MONGODB_ON"){
             Ok(data)=>{data},
             Err(err)=>{
@@ -107,6 +159,7 @@ impl Wallet {
             };
             let mut block =Block{
                 id: Uuid::new_v4().to_string(),
+                transaction_id: "000000000".to_string(),
                 sender_address: "000000000".to_string(),
                 receiver_address: address.to_owned(),
                 date_created: "".to_string(),
@@ -115,11 +168,23 @@ impl Wallet {
                 prev_hash:"000000000".to_string(),
                 public_key: "".to_string(),
                 balance: 100.0,
+                trx_h: Some("jooli".to_string())
             };
+
+            let mut hasher = Sha256::new();
+
+            // write input message
+            hasher.update(password);
+
+            // read hash digest and consume hasher
+            let result = hasher.finalize();
+
+            let hash = format!("{:X}", result);
             let wallet = MongoWallet{
                 id: Uuid::new_v4().to_string(),
                 address: address.to_owned(),
                 wallet_name: "".to_string(),
+                password_hash: hash ,
                 created_at: "".to_string(),
                 public_key: "".to_string(),
                 is_private: false,
@@ -158,6 +223,7 @@ impl Wallet {
         };
         let mut block =Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: "000000000".to_string(),
             receiver_address: address.to_owned(),
             date_created: "".to_string(),
@@ -166,6 +232,7 @@ impl Wallet {
             prev_hash:"000000000".to_string(),
             public_key: "".to_string(),
             balance: 100.0,
+            trx_h: Some("jooli".to_string())
         };
 
         let hash = digest(format!("{}{}{}{}{}",block.id, block.sender_address,
@@ -283,6 +350,7 @@ impl Wallet {
         // loop through and add all the block amounts
         let tmp_block =&&Block{
             id: "".to_string(),
+            transaction_id: "transaction_id".to_string(),
             sender_address: "".to_string(),
             receiver_address: "".to_string(),
             date_created: "".to_string(),
@@ -291,6 +359,7 @@ impl Wallet {
             amount: 0.0,
             public_key: "".to_string(),
             balance: 0.0,
+            trx_h: Some("jooli".to_string())
         };
         let pos = chain.chain.len() -1;
         let block = match chain.chain.get(pos){
