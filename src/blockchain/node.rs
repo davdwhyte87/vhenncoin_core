@@ -1,9 +1,13 @@
+use core::num;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use awc::error;
+use bigdecimal::num_traits::float;
+use bigdecimal::ToPrimitive;
 use chrono::format::StrftimeItems;
 use futures::executor::block_on;
 use futures::{FutureExt, TryFutureExt};
@@ -22,8 +26,9 @@ use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_se
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
+use crate::models::wallet::MongoWallet;
 
-use super::broadcast::notify_new_node_http;
+use super::broadcast::{get_node_wallet_list, get_seed_nodes, get_wallet_data, notify_new_node_http};
 
 
 pub struct Node {
@@ -247,6 +252,94 @@ impl Node {
             let r = notify_new_node_http(&server, &new_node).await;
         }
         Ok(())
+    }
+
+
+    pub async fn sync_wallets_new_node(){
+        // get nodes
+
+        debug!("Syncing wallets .....");
+        let nodes = get_servers();
+        let nodes = match nodes {
+            Ok(nodes)=>{nodes},
+            Err(err)=>{
+                error!("get seed nodes error ... {}", err);
+                return;
+            }
+        };
+
+        // get wallet list for each node 
+            // sample random 20% of the network
+        // let max = nodes.len().to_f64().unwrap();
+        // let number_of_rolls= (20.0/100.0)*max;
+        // let mut i = 0.0;
+
+
+        let mut wallet_list:Vec<MongoWallet> =vec![];
+
+        // get wallet data of all nodes 
+        for node in &nodes {
+           let node_wallet_list =  get_node_wallet_list(&node).await;
+           let mut node_wallet_list = match node_wallet_list{
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error getting wallet list {}", err);
+                vec![]
+            }
+           };
+
+           for wallet in node_wallet_list{
+
+           let res =  Handler::create_wallet_node(&wallet).await;
+           debug!("wallet create resp .. {}", res);
+
+           }
+           //wallet_list.append(&mut node_wallet_list);
+        }
+
+        debug!("Fetched wallets .. {:?}", wallet_list);
+        
+        // make the wallet list unique
+        // let final_wallet_list: Vec<MongoWallet>= wallet_list.into_iter().unique()
+        // .map(|servers| servers)
+        // .collect::<HashSet<_>>()
+        // .into_iter()
+        // .collect();
+
+        // loop through the final wallet list and get wallet data
+        // save the data, pass on if it exists 
+        // for node in &nodes{
+        //     for address in &final_wallet_list {
+        //         let wallet = get_wallet_data(node, address.to_owned()).await;
+        //         let wallet = match wallet {
+        //             Ok(data)=>{data},
+        //             Err(err)=>{
+        //                 error!("{}", err);
+        //                 MongoWallet::default()
+        //             }
+        //         };
+        //         // result does not matter to us yet
+        //         Handler::create_wallet_node(&wallet).await;
+        //     }
+        // }
+        
+    }
+
+
+    // this gets data on a specific wallet, by making request to all the servers 
+    // and then coming to a consensus
+    fn get_wallet_data(){
+        let nodes = get_servers();
+        let nodes = match nodes {
+            Ok(nodes)=>{nodes},
+            Err(err)=>{
+                error!("get seed nodes error ... {}", err);
+                return;
+            }
+        };
+        for node in nodes{
+
+        }
     }
 
 }

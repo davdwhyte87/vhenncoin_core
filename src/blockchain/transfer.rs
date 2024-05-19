@@ -1,6 +1,7 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
 use base64::Engine;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::blockchain::wallet::Wallet;
@@ -169,7 +170,12 @@ impl Transfer {
         
     }
 
-    pub async fn transfer_http(sender:String, receiver:String, amount:f32, transaction_id:String)->Result<(), Box<dyn Error>>{
+    pub async fn transfer_http(
+        sender:String,
+        receiver:String, amount:f32, 
+        transaction_id:String,
+        password: String
+    )->Result<(), Box<dyn Error>>{
         let database = match MongoService::get_db(){
             Some(database)=>{database.db.to_owned()},
             None=>{return Err(Box::from("No database connection"))}
@@ -225,6 +231,18 @@ impl Transfer {
         }
 
 
+        // check if sender has the right access
+        let mut hasher = Sha256::new();
+
+        // write input message
+        hasher.update(password);
+
+        // read hash digest and consume hasher
+        let result = hasher.finalize();
+        let hash = format!("{:X}", result);
+        if (sender_wallet.password_hash != hash){
+            return  Err(Box::from("Unauthorized to make transfer"))
+        }
 
 
         let receiver_chain = match receiver_wallet.chain.chain.last(){

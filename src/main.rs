@@ -21,6 +21,7 @@ use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
+use sha2::digest::consts::U256;
 use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
@@ -28,6 +29,7 @@ use crate::blockchain::node::Node;
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
+use crate::utils::test::test_dd;
 
 mod utils;
 mod req_models;
@@ -59,8 +61,10 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() {
+    //test_dd();
+   //utils::test::cons();
+   //return;
     env::set_var("RUST_BACKTRACE", "full");
-
 
     // let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
     //     Ok(kv_store)=>{kv_store},
@@ -93,21 +97,24 @@ async fn main() {
 
 
     // discover other nodes
-    match Node::discover().await{
-        Ok(_)=>{},
-        Err(err)=>{
-            error!("discovery error .... {}", err)
-        }
-    }
+    // match Node::discover().await{
+    //     Ok(_)=>{},
+    //     Err(err)=>{
+    //         error!("discovery error .... {}", err)
+    //     }
+    // }
 
     // notify nodes of new server in the network
-    match Node::notify_servers_of_new_node().await {
-        Ok(_)=>{},
-        Err(err)=>{
-            error!("notify nodes {}", err)
-        }
-    }
+    // match Node::notify_servers_of_new_node().await {
+    //     Ok(_)=>{},
+    //     Err(err)=>{
+    //         error!("notify nodes {}", err)
+    //     }
+    // }
 
+   
+
+    
     //get_servers().expect("Erro getting server list");
     // start http
     // let http_port = match env::var("HTTP_PORT"){
@@ -157,6 +164,9 @@ async fn main() {
         let db = MongoService::init().await;
         
         let db_data = Data::new(db);
+
+         // sync wallets
+        Node::sync_wallets_new_node().await;
 
         let http_port = match env::var("PORT"){
             Ok(data)=>{data},
@@ -370,7 +380,10 @@ async fn route_to_tcp(req: String) -> String {
             }
         },
         "GetBalance"=>{
-            response = Handler::get_balalnce(message.clone(), &mut None);
+            response = Handler::get_balalnce(message.clone(), &mut None).await;
+        },
+        "GetNodeBalance"=>{
+            response = Handler::get_node_balalnce(message.clone()).await;
         },
         "GetNodeList"=>{
             // get all server nodes
@@ -381,8 +394,15 @@ async fn route_to_tcp(req: String) -> String {
         "AddNode"=>{
             response = Handler::add_node(data_set[1].to_string());
         },
+        "GetNodeWalletList"=>{
+            response = Handler::get_node_wallet_list().await;
+        },
+        "GetWalletData"=>{
+            response = Handler::get_single_wallet(message).await
+        },
 
         _ => {}
     }
+    
     response
 }

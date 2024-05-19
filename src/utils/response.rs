@@ -20,6 +20,10 @@ impl Response{
         
         return resp_string;
     }
+
+    pub fn response_formatter(code:String, message:String, data:String)->String{
+        return format!("{}{}{}{}{}{}",code,r"\n",message,r"\n",data,r"\n");
+    }
 }
 pub struct TCPResponse {
 

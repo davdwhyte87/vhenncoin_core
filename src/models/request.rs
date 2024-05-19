@@ -7,6 +7,7 @@ pub struct TransferReq {
     pub sender: String,
     pub receiver: String,
     pub amount: String,
+    pub sender_password:String
 }
 
 #[derive(Serialize, Deserialize)]
