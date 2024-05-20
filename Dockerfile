@@ -5,4 +5,4 @@ COPY . ./
 
 RUN cargo build 
 EXPOSE 8000
-RUN ["./target/Vhenn_coin"]
+CMD ["./target/Vhenn_coin"]
