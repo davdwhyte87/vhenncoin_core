@@ -52,6 +52,8 @@ Releases are not done frequently because of the nature of the technology and it'
 You communicate to the server through text messages. If you have TCP on, send a tcp message in the right format to the ip address. 
 If it is HTTP, send a POST request to `/send_message`
 `http://0.0.0.0:200/send_message`
+`Test URL: https://kura-coin-core.onrender.com/hello`
+
 ## Create Wallet
 CreateWallet\n{"address":"kolet2","password":"12345","wallet_name":"sudo"}\n0\n0\n0\n
 
