@@ -1,8 +1,8 @@
 FROM rust
 
-RUN mkdir "Vhenn_coin"
+RUN mkdir "vhenn_coin"
 COPY . ./
 
-RUN cargo build --release
+RUN cargo build 
 EXPOSE 8000
 CMD ["./target/Vhenn_coin"]
