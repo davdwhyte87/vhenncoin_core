@@ -10,9 +10,11 @@ a blogger $0.1 for reading a post. We believe that
 there is a need for an internet currency. 
 
 Kuracoin is a decentralized payment network for the new 
-financial system built on love. 
+a financial system built on love. 
 
-
+# Contributing 
+You can join our discord, and meet other engineers and people working on this project. 
+Discord: https://discord.gg/3YavwCmpg5
 
 # The protocol
 kuracoin is built on the tcp protocol primarily, but has an http layer. Miners can configure a node to choose which type of network base protocol they want. 
