@@ -49,5 +49,14 @@ The development environment is wired to a test network.
 If all test passes on development branch, we package a bunch of new features, bug fixes, and launch a release. 
 Releases are not done frequently because of the nature of the technology and it's application in finance. 
 
+You communicate to the server through text messages. If you have TCP on, send a tcp message in the right format to the ip address. 
+If it is HTTP, send a POST request to `/send_message`
+`http://0.0.0.0:200/send_message`
+## Create Wallet
+CreateWallet\n{"address":"kolet2","password":"12345","wallet_name":"sudo"}\n0\n0\n0\n
 
+## Transfer
+Transfer\n{"sender":"armond","receiver":"armond2","amount":"1.2","transaction_id":"118990f999","sender_password":"123456"}\n0\n0\n0\n
 
+## Get Balance 
+GetBalance\n{"address":"boat1"}\n0\n0\n0\n
