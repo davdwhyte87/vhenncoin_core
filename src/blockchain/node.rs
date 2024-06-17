@@ -22,11 +22,13 @@ use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
-use crate::blockchain::broadcast::{get_node_list_http, get_node_list_net, get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_http, get_node_list_net, get_servers, save_server_list};
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
 use crate::models::wallet::MongoWallet;
+use crate::utils::formatter::Formatter;
+use crate::utils::response::{Response, TCPResponse};
 
 use super::broadcast::{get_node_wallet_list, get_seed_nodes, get_wallet_data, notify_new_node_http};
 
@@ -81,21 +83,105 @@ impl Node {
         let data = String::from_utf8_lossy(&buffer).to_string();
         debug!("Request Data : {}", data );
 
+        // let data_set :Vec<&str>= data.split("\n").collect();
+        // debug!("{}", data_set[0]);
+
         let data_set :Vec<&str>= data.split("\n").collect();
-        debug!("{}", data_set[0]);
-
-        match data_set[0]{
-
+        debug!("data piece count {}", data_set.len() );
+    
+        let mut response = String::new();
+        let action_name = data_set.get(0);
+        let action_name = match action_name {
+            Some(data)=>{data},
+            None =>{
+               
+                
+                let res= Formatter::response_formatter(
+                    "0".to_string(),
+                     "request data error. No action name".to_string(), 
+                    "".to_string()
+                    );
+                TCPResponse::send_response_txt(res, &mut stream);
+                return;
+            }
+        };
+        let is_broadcasted = match data_set.get(4){
+            Some(data)=>{data.to_string()},
+            None =>{
+                
+                let res=  Formatter::response_formatter(
+                    "0".to_string(),
+                     "request data error. No is broadcasted".to_string(), 
+                    "".to_string()
+                    );
+                TCPResponse::send_response_txt(res, &mut stream);
+                return;
+            } 
+        };
+    
+        let message = match data_set.get(1){
+            Some(data)=>{data.to_string()},
+            None =>{
+               
+                let res=  Formatter::response_formatter(
+                    "0".to_string(),
+                     "request data error. No message".to_string(), 
+                    "".to_string()
+                    );
+                TCPResponse::send_response_txt(res, &mut stream);
+                return;
+            }   
+        };
+    
+        debug!("action name {}", action_name);
+        debug!(" is broadcasted {}", is_broadcasted);
+        match *action_name{
+    
             "CreateWallet" =>{
-               debug!("Create wallet now");
-                Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream), "0".to_string());
+                debug!("Create wallet now");
+                Handler::create_wallet_tcp(&message, &mut stream, is_broadcasted);
             },
             "Transfer"=>{
-              Handler::transfer(data_set[1].to_string(), &mut Some(stream), "id".to_string());
+                Handler::transfer_c(message.clone(), &mut stream, is_broadcasted.clone());
             },
-
+            "GetBalance"=>{
+               Handler::get_balance_c(message.clone(), &mut stream);
+            },
+            "GetNodeBalance"=>{
+              Handler::get_node_balance_c(message.clone(), &mut stream);
+            },
+            "GetNodeList"=>{
+                // get all server nodes
+                debug!("Handling node request");
+                response = Handler::get_servers();
+                debug!("{}", response);
+            },
+            "AddNode"=>{
+                response = Handler::add_node(data_set[1].to_string());
+            },
+            "GetNodeWalletList"=>{
+               // response = Handler::get_node_wallet_list().await;
+            },
+            "GetWalletData"=>{
+                //response = Handler::get_single_wallet(message).await
+            },
+    
             _ => {}
         }
+        
+
+        // match data_set[0]{
+
+        //     "CreateWallet" =>{
+        //        debug!("Create wallet now");
+        //         Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream), "0".to_string());
+        //     },
+        //     "Transfer"=>{
+        //       Handler::transfer(data_set[1].to_string(), &mut Some(stream), "id".to_string());
+        //     },
+
+        //     _ => {}
+        // }
         let response = "HTTP/1.1 200 OK\r\n\r\n";
 
         //stream.write(response.as_bytes()).unwrap();

@@ -49,4 +49,13 @@ impl TCPResponse {
 
         stream.flush().unwrap();
     }
+
+    pub fn send_response_txt(response:String, stream: &mut TcpStream){
+        match stream.write(response.as_bytes()){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("{}", err.to_string())
+            }
+        }
+    }
 }

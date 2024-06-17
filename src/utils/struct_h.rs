@@ -20,4 +20,17 @@ impl Struct_H {
         debug!("response : {}", resp_string);
         return resp_string;
     }
+
+    pub fn struct_to_string<T:Serialize>(data:&T)->String{
+        let resp_string:String = match serde_json::to_string(data){
+            Ok(str)=>{str},
+            Err(r)=>{
+                error!("{}",r.to_string());
+                "".to_string()
+            }
+        }; 
+        return resp_string;
+    }
+
+   
 }

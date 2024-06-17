@@ -36,10 +36,11 @@ use crate::models::block;
 
 use crate::models::block::{Block, Chain};
 use crate::models::db::{DB, MongoService};
-use crate::models::wallet::{LimitPeriod, MongoWallet};
+use crate::models::wallet::{LimitPeriod, MongoWallet, WalletC};
 use crate::req_models::wallet_requests::CreateWalletReq;
 use crate::utils::time::get_date_time;
-
+use crate::utils::utils;
+use redb::{AccessGuard, Database, ReadableTable, TableDefinition};
 pub struct Wallet{
 
 }
@@ -207,6 +208,308 @@ impl Wallet {
 
         return  Ok(())
     }
+
+
+    pub fn save_block_c(block:Block, address:&String)->Result<(), Box<dyn Error>>{
+        let d_path = format!("data/{}", address) ;
+        // check if wallet exists 
+        if !Path::new(d_path.as_str()).exists() {
+            return Err(Box::from("Wallet does not exists"))
+        }
+
+        let mut wallet = match Wallet::get_wallet_c(&address){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                return Err(err.into());
+            }  
+        };
+        // try open database
+        let path = format!("data/{}/wallet.redb", address) ;
+        const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
+        let db =match  Database::open(path){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+
+       
+        // add new block to chain 
+        wallet.chain.chain.push(block);
+
+        let wallet_string:String = match serde_json::to_string(&wallet){
+            Ok(str)=>{str},
+            Err(r)=>{
+                error!("error encoding wallet {}",r.to_string());
+                return Err(r.into())
+            }
+        };
+
+        debug!(" wallet string .... {}", wallet_string);
+        let write_txn =match  db.begin_write(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+
+        {
+            let mut table = match write_txn.open_table(TABLE){
+                Ok(data)=>{data},
+                Err(err)=>{
+                    error!("error opening table  {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+            match table.insert("wallet_data", wallet_string){
+                Ok(_)=>{},
+                Err(err)=>{
+                    error!("error inserting data {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+        }
+        let _commit_res = match write_txn.commit(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("commit error {}", err.to_string());
+                return Err(err.into())
+            }   
+        };
+
+        
+    
+        return Ok(());
+    }
+
+
+    // create wallet with rocks db kv store
+    pub fn create_wallet_r(address:String, password:String)->Result<(), Box<dyn Error>>{
+        let d_path = format!("data/{}", address) ;
+        if !Path::new(d_path.as_str()).exists() {
+            let folder = fs::create_dir_all(d_path.as_str());
+            match folder {
+                Ok(folder)=>folder,
+                Err(err)=>{
+                    error!("{}", err.to_string());
+                    return Err(err.into())
+                }
+            }
+
+        }else{
+            return Err(Box::from("Wallet path exists"))
+        }
+        // try creating the database 
+        let path = format!("data/{}/wallet.redb", address) ;
+        const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
+        let db =match  Database::create(path){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+
+        let mut hasher = Sha256::new();
+
+        // write input message
+        hasher.update(password);
+
+        // read hash digest and consume hasher
+        let result = hasher.finalize();
+
+        let hash = format!("{:X}", result);
+
+        let transaction_id = digest(format!("{}", Uuid::new_v4().to_string()));
+
+        let mut block =Block{
+            id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id,
+            sender_address: "000000000".to_string(),
+            receiver_address: address.to_owned(),
+            date_created: get_date_time(),
+            hash: "".to_string(),
+            amount: 100.0,
+            prev_hash:"000000000".to_string(),
+            public_key: "".to_string(),
+            balance: 100.0,
+            trx_h: Some("000".to_string())
+        };
+        
+        let mut wallet = WalletC{
+            id: Uuid::new_v4().to_string(),
+            address: address.to_owned(),
+            wallet_name: "".to_string(),
+            password_hash: hash ,
+            created_at:get_date_time(),
+            public_key: "".to_string(),
+            is_private: false,
+            transaction_limit: false,
+            transaction_limit_value: 0.0,
+            limit_period: LimitPeriod::Daily,
+            is_vault: false,
+            release_date: "".to_string(),
+            chain: Chain { chain: vec![] },
+        };
+   
+
+        let hash = digest(format!("{}{}{}{}{}",block.id, block.sender_address,
+                                  block.receiver_address,block.amount, block.prev_hash ));
+
+        block.hash = hash;
+        let chain = Chain{ chain: vec![block] };
+
+        wallet.chain = chain;
+
+        let wallet_string:String = match serde_json::to_string(&wallet){
+            Ok(str)=>{str},
+            Err(r)=>{
+                error!("error encoding wallet {}",r.to_string());
+                return Err(r.into())
+            }
+        };
+
+        debug!(" wallet string .... {}", wallet_string);
+        let write_txn =match  db.begin_write(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+
+        {
+            let mut table = match write_txn.open_table(TABLE){
+                Ok(data)=>{data},
+                Err(err)=>{
+                    error!("error opening table  {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+            match table.insert("wallet_data", wallet_string){
+                Ok(_)=>{},
+                Err(err)=>{
+                    error!("error inserting data {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+        }
+        let _commit_res = match write_txn.commit(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("commit error {}", err.to_string());
+                return Err(err.into())
+            }   
+        };
+        let read_txn = match  db.begin_read(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            } 
+        };
+        let table = match read_txn.open_table(TABLE){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        let res_data =match  table.get("wallet_data") {
+            Ok(data)=>{
+                match data {
+                    Some(data)=>{data},
+                    None=>{return Err(Box::from("No data"))}
+                }
+                },
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }  
+        };
+        debug!("{}", res_data.value()  );
+        return Ok(())
+    }
+
+
+    pub fn get_balance_c(address:&String)->Result<f32, Box<dyn Error>>{
+        let wallet = match Wallet::get_wallet_c(address){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+                return Err(err.into());
+            }
+        };
+
+        // get chains and last block for latest balance data
+        let balance =match  wallet.chain.chain.last(){
+            Some(data)=>{data.balance},
+            None=>{0.0}
+        };
+
+        return Ok(balance);
+    }
+    // get wallet from new kv store
+    pub fn get_wallet_c(address:&String)->Result<WalletC, Box<dyn Error>>{
+        let path = format!("data/{}/wallet.redb", address);
+        // table definition
+        const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
+        // check if wallet exists 
+        let d_path = format!("data/{}", address) ;
+        if !Path::new(d_path.as_str()).exists() {
+            return  Err(Box::from("Wallet does not exist"));
+        }
+        // open database 
+        let db = match Database::open(path){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                return  Err(err.into());
+            }
+        };
+        let read_txn = match  db.begin_read(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            } 
+        };
+        let table = match read_txn.open_table(TABLE){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        let res_data =match  table.get("wallet_data") {
+            Ok(data)=>{
+                match data {
+                    Some(data)=>{data},
+                    None=>{return Err(Box::from("No data"))}
+                }
+                },
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }  
+        };
+        // debug!("{}", res_data.value());
+
+        // convert db string data 
+        let wallet = match serde_json::from_str::<WalletC>(&res_data.value()){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                return Err(err.into());
+            }
+        };
+
+        return Ok(wallet);
+    }
+
     // create a wallet on the blockchain
     pub fn create_wallet(address:String, public_key:String)->Result<(), Box<dyn Error>>{
 

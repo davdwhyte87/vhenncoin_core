@@ -2,11 +2,11 @@ use std::borrow::Borrow;
 use std::env::current_dir;
 use std::error::Error;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
 use std::str::from_utf8;
 use std::time::Duration;
-use std::vec;
+use std::{f32, vec};
 use actix_web::http;
 use log::{debug, error};
 use reqwest::header::CONTENT_TYPE;
@@ -14,6 +14,9 @@ use crate::models::request::GetBalanceReq;
 use crate::models::response::{GenericResponse, WalletNamesResp};
 use crate::models::server_list::{ServerData, ServerList};
 use crate::models::wallet::MongoWallet;
+use crate::utils::constants;
+use crate::utils::formatter::Formatter;
+use crate::utils::struct_h::Struct_H;
 use crate::utils::utils::request_formatter;
 use reqwest;
 
@@ -271,6 +274,42 @@ pub async fn  notify_new_node_http(server_data:&ServerData, new_node:&ServerData
     Ok(())
 }
 
+
+// telll other servers about the new request
+pub fn broadcast_request_tcp(action:String, message:String){
+    // get servers for the node 
+    let servers = match get_servers() {
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}", err.to_string());
+            return;
+        }
+    };
+
+    let final_message = Formatter::request_formatter(
+        action,
+        message,
+        "".to_string(),
+        "".to_string(),
+        "1".to_string());
+
+    for server in servers{
+        match TcpStream::connect(server.ip_address) {
+            Ok(mut stream)=>{
+                // send data to ip computer
+                stream.write(final_message.as_ref());
+                // no need to read response
+                // we do not care if it fails for now...
+            },
+            Err(err)=>{
+                error!("error parsing data {}",err.to_string());
+                return
+            }
+        } 
+    }
+}
+
+
 pub fn broadcast_request(message:String, ip_address:String){
     // get all servers
     match TcpStream::connect(ip_address) {
@@ -467,6 +506,56 @@ pub async fn get_wallet_data(server_data:&ServerData, address:String)->Result<Mo
 
 }
 
+
+pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Result<f32, Box<dyn Error>>{
+    let request = Struct_H::struct_to_string(&GetBalanceReq{address:address.to_owned()});
+    let message = Formatter::request_formatter(
+        constants::GET_NODE_BALANCE_ACTION.to_owned(),
+        request,
+        "".to_string(),
+        "".to_string(),
+        "0".to_string()
+    );
+    let mut response = String::new();
+    match TcpStream::connect(server_data.ip_address.to_owned()) {
+        Ok(mut stream)=>{
+            // send data to ip computer
+            stream.write(message.as_ref());
+            
+            let mut reader = BufReader::new(&stream);
+            
+            let _ = reader.read_to_string(&mut response);
+
+            stream.flush();
+        },
+        Err(err)=>{
+            error!("error parsing data {}",err.to_string());
+            return Err(err.into())
+        }
+    }
+
+    debug!("remote balance response ..{}", response);
+
+    // brrak down response 
+    let data_set :Vec<&str>= response.split("\n").collect();
+    let data = match data_set.get(2){
+        Some(data)=>{data},
+        None =>{return Err(Box::from("Could not break response down"))}
+    };
+
+    // get message  
+    use std::str::FromStr;
+    let balance =  match f32::from_str(data){
+        Ok(data)=>{data},
+        Err(err)=>{
+            debug!("{}", err.to_string());
+            0.00
+        }
+    };
+
+
+    Ok(balance)
+}
 
 pub async fn get_node_balance(server_data:&ServerData, address:&String)->Result<f32, Box<dyn Error>>{
         

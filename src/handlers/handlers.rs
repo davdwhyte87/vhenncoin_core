@@ -8,22 +8,26 @@ use futures::executor::block_on;
 use futures_util::future::err;
 use log::{debug, error};
 use tokio::runtime::Runtime;
-use crate::blockchain::broadcast::{broadcast_request_http, get_node_balance, get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_servers, save_server_list};
 use crate::blockchain::concensus::Concensus;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::Wallet;
 use crate::models;
-use crate::models::balance_pack::BalancePack;
+use crate::models::balance_pack::{BalanceCPack, BalancePack};
 use crate::models::block::{Block, Chain};
 use crate::models::db::MongoService;
 use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, TransferReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse, WalletNamesResp};
 use crate::models::server_list::ServerData;
 use crate::models::wallet::MongoWallet;
+use crate::utils::constants;
+use crate::utils::env::get_env;
+use crate::utils::formatter::Formatter;
 use crate::utils::response::{Response, TCPResponse};
 use crate::utils::struct_h::Struct_H;
+use crate::utils::test::response_formatter;
 use models::balance_pack;
 
 pub struct Handler{
@@ -67,6 +71,122 @@ impl Handler {
              balance.to_string()
             )
 
+    }
+
+
+    pub fn get_balance_c(data:String, stream: &mut TcpStream){
+        let mut request: GetBalanceReq = match  serde_json::from_str(data.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        let servers =match  get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+                debug!("{}", err.to_string());
+                vec![]
+            }
+        };
+        let mut balance_pack_list:Vec<BalanceCPack> = vec![];
+
+        let n_balance =match  Wallet::get_balance_c(&request.address){
+            Ok(data)=>{data},
+            Err(err)=>{
+                debug!("{}", err.to_string());
+                0.00
+            }
+        };
+        // push the local nodes balance for voting 
+        balance_pack_list.push(BalanceCPack{ip_address:get_env("TCP_ADDRESS"), balance:n_balance});
+
+        for server in servers{
+           // get balance from other servers 
+           let r_balance = get_remote_node_balance_c(&server,
+                &request.address);
+           let r_balance = match r_balance {
+               Ok(data)=>{data},
+               Err(err)=>{
+                   error!("error ... {}", err);
+                   0.0
+               }
+           };
+
+
+           balance_pack_list.push(BalanceCPack{ip_address:server.ip_address.to_owned(), balance:r_balance})
+
+        }
+
+        // for this certain wallet address, these are the balances in their balance pack 
+        // if there are 10 nodes in the network, then we will have 10 balances 
+        // we now have to do some voting 
+
+        let b_vote = Concensus::vote_balance_c(balance_pack_list);
+
+
+       let resp_message = Formatter::response_formatter(
+           "1".to_string(),
+            "Ok".to_string(), 
+            b_vote.balance.to_string()
+           );
+
+        TCPResponse::send_response_txt(resp_message, stream);
+        stream.flush();
+        return;
+    }
+    pub fn get_node_balance_c(data:String, stream: &mut TcpStream){
+        let mut request: GetBalanceReq = match  serde_json::from_str(data.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        let wallet = match Wallet::get_wallet_c(&request.address){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        // get chains and last block for latest balance data
+        let balance =match  wallet.chain.chain.last(){
+            Some(data)=>{data.balance},
+            None=>{0.0}
+        };
+
+        let balance_resp = Formatter::response_formatter(
+            "1".to_string(),
+            "Ok".to_string(),
+            balance.to_string()
+        );
+        TCPResponse::send_response_txt(balance_resp, stream);
+        return;
     }
 
     pub async fn get_balalnce(data:String,stream:&mut Option<TcpStream>)->String{
@@ -156,6 +276,55 @@ impl Handler {
              b_vote.balance.to_string()
             )
 
+    }
+
+      // transfer ...
+    pub fn transfer_c(data:String,stream:&mut TcpStream, is_broadcasted:String){
+        // descode message
+        let mut request: TransferReq = match  serde_json::from_str(data.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        debug!("transaction ID {}", request.transaction_id);
+
+        match Transfer::transfer(request.sender, request.receiver, f32::from_str(request.amount.as_str()).unwrap(), request.transaction_id){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error sending finds".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        let response = Formatter::response_formatter(
+            "1".to_string(),
+             "Sent!".to_string(), 
+             "".to_string()
+            );
+        TCPResponse::send_response_txt(response, stream);
+
+        // send boardcast about the transfer to other nodes
+        if is_broadcasted == "0" {
+            debug!("broadcasting .........");
+            broadcast_request_tcp(constants::TRNASFER_ACTION.to_owned(), data);
+        }
+        return;
     }
 
     // transfer ...
@@ -266,6 +435,53 @@ impl Handler {
 
     }
 
+
+    pub fn create_wallet_tcp(message:&String, stream: &mut TcpStream, is_broadcasted:String){
+        let request: CreateWalletReq = match  serde_json::from_str(message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+                
+                let res = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                   
+                TCPResponse::send_response_txt(res,  stream);
+                return;
+            }
+        };
+        debug!("Done decoding message");
+        let resp = match Wallet::create_wallet_r(request.address,request.password){
+            Ok(data)=>{
+                let response = Formatter::response_formatter(
+                    "1".to_string(),
+                     "Created!".to_string(),
+                     "".to_string()
+                    );
+                    TCPResponse::send_response_txt(response,  stream);
+
+                    // broadcast and tell other servers about the newly created wallet
+                    if is_broadcasted == "0" {
+                        debug!("broadcasting ...... ");
+                        broadcast_request_tcp("CreateWallet".to_string(),message.to_string());
+                    }
+                    return;
+            },
+            Err(err)=>{
+                error!("{}", err.to_string());
+                let response = Formatter::response_formatter(
+                "0".to_string(),
+                 "Error creating wallet".to_string(),
+                 err.to_string()
+                );
+                TCPResponse::send_response_txt(response,  stream);
+                return;
+                
+            }
+        };
+    }
     pub fn create_wallet(message:&String, stream: &mut Option<TcpStream>, is_broadcasted:String)->String{
 
         // descode message

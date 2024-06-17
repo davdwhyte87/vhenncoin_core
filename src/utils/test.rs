@@ -1,6 +1,7 @@
 use std::vec;
 
 use log::debug;
+use redb::{Database, TableDefinition};
 
 
 
@@ -35,7 +36,23 @@ impl MongoWalletX {
     }
 }
 
+
 pub fn test_dd(){
+    const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
+    let db = Database::create("noom.redb").unwrap();
+    let write_txn = db.begin_write().unwrap();
+    {
+        let mut table = write_txn.open_table(TABLE).unwrap();
+        table.insert("my_key", "jsdnkjdnsvs".to_string());
+    }
+    write_txn.commit();
+
+    let read_txn = db.begin_read().unwrap();
+    let table = read_txn.open_table(TABLE).unwrap();
+    println!("{}", table.get("my_key").unwrap().unwrap().value());
+    debug!("{}",  table.get("my_key").unwrap().unwrap().value())
+}
+pub fn test_dd_c(){
     
     // conver to string
     let mongo_wallet = MongoWalletX::default();
@@ -73,7 +90,7 @@ pub fn test_dd(){
 }
 
 pub fn response_formatter(code:String, message:String, data:String)->String{
-    return format!("{}{}{}{}{}{}",code,r"\n",message,r"\n",data,r"\n");
+    return format!("{}{}{}{}{}{}",code,"\n",message,"\n",data,"\n");
 }
 
 pub fn cons(){

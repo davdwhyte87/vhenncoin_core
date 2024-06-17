@@ -43,6 +43,23 @@ pub struct MongoWallet {
 }
 
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WalletC {
+    pub id: String,
+    pub address: String,
+    pub wallet_name: String,
+    pub password_hash:String,
+    pub created_at: String,
+    pub public_key: String,
+    pub is_private: bool,
+    pub transaction_limit: bool,
+    pub transaction_limit_value: f32,
+    pub limit_period: LimitPeriod,
+    pub is_vault: bool,
+    pub release_date: String,
+    pub chain:Chain
+}
+
 
 
 impl MongoWallet {

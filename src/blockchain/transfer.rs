@@ -305,7 +305,7 @@ impl Transfer {
         return Ok(())
     }
     // transfer value from one wallet to another
-    pub fn transfer(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
+    pub fn transfer(sender:String, receiver:String, amount:f32, transaction_id:String)->Result<(), Box<dyn Error>>{
         
         // get sender public key from last block
         // check if both wallets exist
@@ -315,7 +315,7 @@ impl Transfer {
             return Err(Box::from("Wallet does not exist"))
         }
         //check if sender has the money available
-        let mut sender_chain = match Wallet::get_wallet_chain(&sender){
+        let mut sender_chain = match Wallet::get_wallet_c(&sender){
             Ok(sender_chian)=>{sender_chian},
             Err(err)=>{
                 error!(" error getting chain {}",err.to_string());
@@ -323,26 +323,24 @@ impl Transfer {
             }
 
         };
-        let mut receiver_chain = match Wallet::get_wallet_chain(&receiver){
+        let mut receiver_chain = match Wallet::get_wallet_c(&receiver){
             Ok(receiver_chain)=>{receiver_chain},
             Err(err)=>{
                 error!("error getting chain {}",err.to_string());
                 return Err(err.into())
             }
         };
-        let sender_balance = match Wallet::get_balance(&sender){
-            Ok(sender_balance)=>{sender_balance},
-            Err(err)=> {
-                error!("error getting sender balance {}",err.to_string());
-                return Err(err.into())
-            }
+        let sender_balance = match sender_chain.chain.chain.last(){
+            Some(data)=>{
+                data.balance
+            }, 
+            None=>{0.0}
         };
-        let receiver_balance = match Wallet::get_balance(&receiver){
-            Ok(receiver_balance)=>{receiver_balance},
-            Err(err)=> {
-                error!(" error getting receiver balance {}",err.to_string());
-                return Err(err.into())
-            }
+        let receiver_balance = match receiver_chain.chain.chain.last(){
+            Some(data)=>{
+                data.balance
+            }, 
+            None=>{0.0}
         };
 
         if sender_balance < amount{
@@ -350,38 +348,45 @@ impl Transfer {
         }
         // create minus block
 
-        let sender_block = Block{
+        let mut sender_block = Block{
             id: Uuid::new_v4().to_string(),
-            transaction_id: "transaction_id".to_string(),
+            transaction_id: transaction_id.to_string(),
             sender_address: sender.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
-            hash: "sender_h".parse().unwrap(),
+            hash: "".to_string(),
             amount: amount.clone(),
-            prev_hash :"".to_string(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone(),
+            prev_hash :receiver_chain.chain.chain.last().unwrap().hash.to_owned(),
+            public_key: "".to_string(),
             balance : sender_balance - amount.clone(),
-            trx_h: Some("jooli".to_string())
+            trx_h: Some("000".to_string())
         };
+        let sender_b_hash = digest(format!("{}{}{}{}{}",&sender_block.id, &sender_block.sender_address,
+        &sender_block.receiver_address,&sender_block.amount, &sender_block.prev_hash ));
+        sender_block.hash = sender_b_hash;
+
         // create add block for receiver
-        let receiver_block = Block{
+        let mut receiver_block = Block{
             id: Uuid::new_v4().to_string(),
-            transaction_id: "transaction_id".to_string(),
+            transaction_id: transaction_id.to_owned(),
             sender_address: sender.to_owned(),
-            prev_hash :"".to_string(),
+            prev_hash :receiver_chain.chain.chain.last().unwrap().hash.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
-            hash: "receiver_h".parse().unwrap(),
+            hash:"".to_string(),
             amount: amount.clone(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone(),
+            public_key: "".to_string(),
             balance : receiver_balance + amount,
-            trx_h: Some("jooli".to_string())
+            trx_h: Some("000".to_string())
         };
+        let receiver_b_hash = digest(format!("{}{}{}{}{}",receiver_block.id, receiver_block.sender_address,
+        receiver_block.receiver_address,receiver_block.amount, receiver_block.prev_hash ));
+        receiver_block.hash = receiver_b_hash;
 
-        sender_chain.chain.push(sender_block);
-        receiver_chain.chain.push(receiver_block);
+        // sender_chain.chain.chain.push(sender_block);
+        // receiver_chain.chain.chain.push(receiver_block);
         // if two blocks are saved well, send response
-        match KvStore::save(sender.to_owned(), "chain".to_string(), Some(sender_chain)){
+        match Wallet::save_block_c(sender_block, &sender){
             Ok(_)=>{},
             Err(err)=>{
                 error!("error saving {}",err.to_string());
@@ -389,22 +394,13 @@ impl Transfer {
             }
         }
 
-        match KvStore::save(receiver, "chain".to_string(), Some(receiver_chain)){
+        match Wallet::save_block_c(receiver_block, &receiver){
             Ok(_)=>{},
             Err(err)=>{
                 error!("error saving {}",err.to_string());
                 return Err(err.into())
             }
         }
-
-        let sender_balance = match Wallet::get_balance(&sender){
-            Ok(sender_balance)=>{sender_balance},
-            Err(err)=> {
-                error!("error getting sender balance {}",err.to_string());
-                return Err(err.into())
-            }
-        };
-        debug!("sender balance {} amount {}",f32::to_string(&sender_balance), amount);
 
         return Ok(())
     }

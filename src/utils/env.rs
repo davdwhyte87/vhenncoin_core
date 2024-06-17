@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::string::ToString;
 use env_file_reader::read_file;
 use log::error;
@@ -17,6 +18,18 @@ pub fn init_env(){
     };
 }
 
-pub fn get_env(){
+// pub fn get_env(){
 
+// }
+
+pub fn get_env(key:&str)->String{
+    let data = match env::var(key){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "".to_string()
+        }
+    };
+
+    return data;
 }
