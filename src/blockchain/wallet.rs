@@ -434,7 +434,103 @@ impl Wallet {
         return Ok(())
     }
 
+    // creates a wallet but this is not accessible to client apps, this is for 
+    //internal node syncing purposes
+    pub fn create_wallet_node(address: &String, wallet:WalletC)->Result<(), Box<dyn Error>>{
+        let d_path = format!("data/{}", address) ;
+        if !Path::new(d_path.as_str()).exists() {
+            let folder = fs::create_dir_all(d_path.as_str());
+            match folder {
+                Ok(folder)=>folder,
+                Err(err)=>{
+                    error!("{}", err.to_string());
+                    return Err(err.into())
+                }
+            }
 
+        }else{
+            return Err(Box::from("Wallet path exists"))
+        }
+
+
+        let wallet_string:String = match serde_json::to_string(&wallet){
+            Ok(str)=>{str},
+            Err(r)=>{
+                error!("error encoding wallet {}",r.to_string());
+                return Err(r.into())
+            }
+        };
+        // try creating the database 
+        let path = format!("data/{}/wallet.redb", address) ;
+        const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
+        let db =match  Database::create(path){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        let write_txn =match  db.begin_write(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        
+
+        {
+            let mut table = match write_txn.open_table(TABLE){
+                Ok(data)=>{data},
+                Err(err)=>{
+                    error!("error opening table  {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+            match table.insert("wallet_data", wallet_string){
+                Ok(_)=>{},
+                Err(err)=>{
+                    error!("error inserting data {}", err.to_string());
+                    return Err(err.into())
+                } 
+            };
+        }
+        let _commit_res = match write_txn.commit(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("commit error {}", err.to_string());
+                return Err(err.into())
+            }   
+        };
+        let read_txn = match  db.begin_read(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            } 
+        };
+        let table = match read_txn.open_table(TABLE){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        let res_data =match  table.get("wallet_data") {
+            Ok(data)=>{
+                match data {
+                    Some(data)=>{data},
+                    None=>{return Err(Box::from("No data"))}
+                }
+                },
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }  
+        };
+        debug!("{}", res_data.value()  );
+        return Ok(())  
+    }
     pub fn get_balance_c(address:&String)->Result<f32, Box<dyn Error>>{
         let wallet = match Wallet::get_wallet_c(address){
             Ok(data)=>{data},

@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::wallet::MongoWallet;
+use super::wallet::{MongoWallet, WalletC};
 
 #[derive(Serialize,Deserialize)]
 pub struct GenericResponse {
@@ -20,6 +20,12 @@ pub struct GetBalanceResponse {
 #[derive(Serialize,Deserialize)]
 pub struct WalletNamesResp{
     pub names: Vec<MongoWallet>
+
+}
+
+#[derive(Serialize,Deserialize)]
+pub struct WalletNamesRespC{
+    pub names: Vec<String>
 
 }
 

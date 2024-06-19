@@ -10,8 +10,9 @@ use std::{f32, vec};
 use actix_web::http;
 use log::{debug, error};
 use reqwest::header::CONTENT_TYPE;
+use crate::blockchain::wallet;
 use crate::models::request::GetBalanceReq;
-use crate::models::response::{GenericResponse, WalletNamesResp};
+use crate::models::response::{GenericResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::{ServerData, ServerList};
 use crate::models::wallet::MongoWallet;
 use crate::utils::constants;
@@ -503,6 +504,56 @@ pub async fn get_wallet_data(server_data:&ServerData, address:String)->Result<Mo
     // };
     
     return Ok(wallet_data)
+
+}
+
+
+// communicate with other nodes and get their list of wallets
+pub fn get_node_wallet_list_C(server_data:&ServerData)-> Result<Vec<String>, Box<dyn Error>>{
+    let message = Formatter::request_formatter(
+        constants::GET_NODE_WALLET_LIST.to_owned(),
+        "".to_string(),
+        "".to_string(),
+        "".to_string(),
+        "0".to_string()
+    );
+    let mut response = String::new();
+    match TcpStream::connect(server_data.ip_address.to_owned()) {
+        Ok(mut stream)=>{
+            // send data to ip computer
+            stream.write(message.as_ref());
+            
+            let mut reader = BufReader::new(&stream);
+            
+            let _ = reader.read_to_string(&mut response);
+
+            stream.flush();
+        },
+        Err(err)=>{
+            error!("error parsing data {}",err.to_string());
+            return Err(err.into());
+        }
+    }
+
+    debug!("remote balance response ..{}", response);
+
+    // brrak down response 
+    let data_set :Vec<&str>= response.split("\n").collect();
+    let data = match data_set.get(2){
+        Some(data)=>{data},
+        None =>{return  Err(Box::from("No data in response ")); }
+    }; 
+
+    let wallet_names = serde_json::from_str::<WalletNamesRespC>(&data);
+    let wallet_names = match wallet_names{
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("error {}",err.to_string());  
+            return Err(err.into());
+        }
+    };
+
+    return Ok(wallet_names.names);
 
 }
 

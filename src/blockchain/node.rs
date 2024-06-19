@@ -22,7 +22,8 @@ use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
-use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_http, get_node_list_net, get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_http, get_node_list_net, get_node_wallet_list_C, get_servers, save_server_list};
+use crate::blockchain::wallet::Wallet;
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
@@ -153,17 +154,17 @@ impl Node {
             "GetNodeList"=>{
                 // get all server nodes
                 debug!("Handling node request");
-                response = Handler::get_servers();
-                debug!("{}", response);
+                Handler::get_servers_c(&mut stream);
+                
             },
             "AddNode"=>{
-                response = Handler::add_node(data_set[1].to_string());
+                Handler::add_node_c(&message.clone(), &mut stream);
             },
             "GetNodeWalletList"=>{
-               // response = Handler::get_node_wallet_list().await;
+               Handler::get_node_wallet_list_c(&mut stream);
             },
             "GetWalletData"=>{
-                //response = Handler::get_single_wallet(message).await
+                Handler::get_single_wallet_c(message.clone(), &mut stream);
             },
     
             _ => {}
@@ -341,6 +342,43 @@ impl Node {
     }
 
 
+    // connect with other nodes and get wallet data
+    pub fn sync_wallets_new_node_c(){
+
+          // get nodes
+
+        debug!("Syncing wallets .....");
+        let nodes = get_servers();
+        let nodes = match nodes {
+            Ok(nodes)=>{nodes},
+            Err(err)=>{
+                error!("get seed nodes error ... {}", err);
+                return;
+            }
+        };
+
+        let mut wallet_list:Vec<MongoWallet> =vec![];
+     // get wallet data of all nodes 
+     for node in &nodes {
+        let node_wallet_list =  get_node_wallet_list_C(&node);
+        let mut node_wallet_list = match node_wallet_list{
+         Ok(data)=>{data},
+         Err(err)=>{
+             error!("error getting wallet list {}", err);
+             vec![]
+         }
+        };
+
+        // create a new wallet on the local server
+        for wallet in node_wallet_list{
+
+        //let res =  Wallet::create_wallet_node(address, wallet);
+        //debug!("wallet create resp .. {}", res);
+
+        }
+        //wallet_list.append(&mut node_wallet_list);
+     }
+    }
     pub async fn sync_wallets_new_node(){
         // get nodes
 

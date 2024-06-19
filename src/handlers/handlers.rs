@@ -1,12 +1,13 @@
 use std::borrow::BorrowMut;
 use std::env::{self, current_dir};
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::str::FromStr;
 use futures::executor::block_on;
 use futures_util::future::err;
 use log::{debug, error};
+use log4rs::append::file;
 use tokio::runtime::Runtime;
 use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_servers, save_server_list};
 use crate::blockchain::concensus::Concensus;
@@ -19,9 +20,9 @@ use crate::models::balance_pack::{BalanceCPack, BalancePack};
 use crate::models::block::{Block, Chain};
 use crate::models::db::MongoService;
 use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, TransferReq};
-use crate::models::response::{GenericResponse, GetBalanceResponse, WalletNamesResp};
+use crate::models::response::{GenericResponse, GetBalanceResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::ServerData;
-use crate::models::wallet::MongoWallet;
+use crate::models::wallet::{MongoWallet, WalletC};
 use crate::utils::constants;
 use crate::utils::env::get_env;
 use crate::utils::formatter::Formatter;
@@ -573,6 +574,57 @@ impl Handler {
             )
     }
 
+    pub fn get_servers_c(stream: &mut TcpStream){
+        let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
+        debug!("serverlist file path {}",data_path);
+        let mut file =match  File::open(data_path.clone()){
+            Ok(file)=>{file},
+            Err(err)=>{
+                error!("error opening file {}",err.to_string());
+                let response = GenericResponse{
+                    message : "Error fetching server list".to_string(),
+                    code : 0
+                };
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error fetching server list ".to_string(), 
+                     err.to_string()
+                    );
+                
+                TCPResponse::send_response_txt(response, stream);
+
+                return;
+            } 
+        };
+        let mut content = String::new();
+    
+        match file.read_to_string(&mut content){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!(" error reading file {}",err.to_string());
+                let response = GenericResponse{
+                    message : "Error fetching server list".to_string(),
+                    code : 0
+                };
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error  fetching server list".to_string(), 
+                     err.to_string()
+                    );
+
+                TCPResponse::send_response_txt(response, stream);
+                    return;
+            }
+        }
+                
+        let response = Response::response_formatter(
+            "1".to_string(),
+             "Error persing data".to_string(), 
+             content
+            );
+        TCPResponse::send_response_txt(response, stream);
+        return;
+    }
 
     pub fn get_servers()->String{
         let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
@@ -640,6 +692,100 @@ impl Handler {
 
     }
 
+    // add new node to list of remote server 
+    pub fn add_node_c(message:&String, stream: &mut TcpStream){
+        let mut request: AddNodeReq = match  serde_json::from_str(message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("persing message {}",err.to_string());
+                // return format!("0{}{}",r"\n","Error persing message");
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing message".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+                // AddNodeReq{ id: todo!(), ip_address: todo!(), public_key: todo!(), http_address: todo!() }
+                // return Response::string_response(&response)
+            }
+        }; 
+
+        let new_server_data = ServerData{
+            ip_address :request.ip_address,
+            id: request.id,
+            http_address:request.http_address,
+            public_key: request.public_key
+        };
+
+        // get local node server list
+        let mut  node_list = match get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+            
+                error!("fetching server list {}", err);
+                // return format!("0{}{}",r"\n","Error fetching server list");
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error fetching server list".to_string(), 
+                     err.to_string()
+                    );
+
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+            
+        };
+
+        // add new node 
+        // check if node exists
+        let has_new_node = node_list.contains(&new_server_data);
+        if !has_new_node {
+            node_list.push(new_server_data);
+        }
+       
+
+        // let data_string:String = serde_json::json!(node_list).to_string();
+        let data_string = match serde_json::to_string(&node_list){
+            Ok(new_node_string)=>{new_node_string},
+            Err(err)=>{
+                error!("Request error ... {}", err);
+                // return  format!("0{}{}",r"\n","Error converting to string");
+                let response = Response::response_formatter(
+                    "0".to_string(),
+                     "Error converting to string".to_string(), 
+                     err.to_string()
+                    );
+
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+        // save to disk
+        match save_server_list(data_string){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("saving list to disk {}", err);
+                // return format!("0{}{}",r"\n","Error saving data");
+                let response = Response::response_formatter(
+                    "0".to_string(),
+                     "Error saving data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+        // return format!("1 {}{}",r"\n","Node added successfully");
+        let response = Response::response_formatter(
+            "1".to_string(),
+             "Node added successfully".to_string(), 
+             "".to_string()
+            );
+
+        TCPResponse::send_response_txt(response, stream);
+        return;
+    }
 
     // add new node to list of nodes in server list
     // later to be moved to Node struct
@@ -752,6 +898,68 @@ impl Handler {
 
     }
 
+    // this gets all the wallet addresses for the local node 
+    pub fn get_node_wallet_list_c(stream: &mut TcpStream){
+      
+        let entries = match fs::read_dir("/data"){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Wrror with read dir".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        let mut wallets:Vec<WalletC> =vec![];
+        // Extract the filenames from the directory entries and store them in a vector
+        let file_names: Vec<String> = entries
+            .filter_map(|entry| {
+                let path = entry.ok()?.path();
+                if path.is_file() {
+                    let address = path.file_name()?.to_str().map(|s| s.to_owned()).unwrap();
+                    let wallet = Wallet::get_wallet_c(&address).unwrap();
+                    wallets.push(wallet);
+                    path.file_name()?.to_str().map(|s| s.to_owned())
+                   
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        
+        let wallet_names = WalletNamesRespC{
+            names :file_names
+        };
+
+        let wallets_str = serde_json::to_string(&wallet_names);
+        let wallets_string =match wallets_str {
+            Ok(data)=>{data},
+            Err(err)=>{ 
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "persing wallets to struct".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+                }
+        };
+       
+        let response: String = Formatter::response_formatter(
+            "1".to_string(),
+             "Ok".to_string(), 
+             wallets_string
+            ) ;
+
+        TCPResponse::send_response_txt(response, stream);
+        return;
+    }
 
 
     // this gets all the wallet addresses 
@@ -787,6 +995,50 @@ impl Handler {
             )
     }
 
+
+    pub fn get_single_wallet_c(address:String,  stream: &mut TcpStream){
+        let wallet = Wallet::get_wallet_c(&address);
+        let wallet = match wallet {
+            Ok(wallet)=>{wallet},
+            Err(err)=>{
+                error!("error ... {}", err);
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error getting single wallet from db".to_string(), 
+                     err.to_string()
+                    );
+
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        } ;
+
+        let wallets_str = serde_json::to_string(&wallet);
+        let wallets_string =match wallets_str {
+            Ok(data)=>{data},
+            Err(err)=>{ 
+                error!("error ... {}", err);
+                let response: String = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing wallet to string".to_string(), 
+                     err.to_string()
+                    );
+
+                TCPResponse::send_response_txt(response, stream);
+                return;
+                }
+        };
+        //  return format!("1 {}{}{}{:?}",r"\n","Ok","r\n",wallets_string);
+        let response: String = Formatter::response_formatter(
+            "1".to_string(),
+             "Ok".to_string(), 
+             wallets_string
+            );
+
+        TCPResponse::send_response_txt(response, stream);
+        return;
+
+    }
     pub async fn get_single_wallet(address:String)->String{
         let wallets = Wallet::get_single_wallet(address).await;
         let wallets = match wallets {
