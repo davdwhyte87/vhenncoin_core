@@ -1,7 +1,9 @@
+use std::clone;
+
 use serde::{Deserialize, Serialize};
 
 // this represents a chunck of transaction data in a wallet
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Block{
     pub id:String,
     pub transaction_id:String,
@@ -16,7 +18,7 @@ pub struct Block{
     pub trx_h:Option<String>
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Chain{
     pub chain: Vec<Block>
 }

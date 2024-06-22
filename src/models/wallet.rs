@@ -43,7 +43,7 @@ pub struct MongoWallet {
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct WalletC {
     pub id: String,
     pub address: String,
@@ -60,6 +60,26 @@ pub struct WalletC {
     pub chain:Chain
 }
 
+impl WalletC {
+    
+    pub fn default()->WalletC{
+        return WalletC{
+            id: "".to_string(),
+            address:  "".to_string(),
+            wallet_name:  "".to_string(),
+            password_hash:  "".to_string(),
+            created_at:  "".to_string(),
+            public_key:  "".to_string(),
+            is_private: false,
+            transaction_limit:false,
+            transaction_limit_value: 2.2,
+            limit_period: LimitPeriod::Daily,
+            is_vault: false,
+            release_date:  "".to_string(),
+            chain:Chain { chain: vec![] },
+        };
+    }
+}
 
 
 impl MongoWallet {

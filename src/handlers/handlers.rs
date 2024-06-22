@@ -6,17 +6,18 @@ use std::net::TcpStream;
 use std::str::FromStr;
 use futures::executor::block_on;
 use futures_util::future::err;
+use itertools::Format;
 use log::{debug, error};
 use log4rs::append::file;
 use tokio::runtime::Runtime;
-use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_remote_wallet, get_servers, save_server_list};
 use crate::blockchain::concensus::Concensus;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::transfer::Transfer;
-use crate::blockchain::wallet::Wallet;
+use crate::blockchain::wallet::{self, Wallet};
 use crate::models;
-use crate::models::balance_pack::{BalanceCPack, BalancePack};
+use crate::models::balance_pack::{BalanceCPack, BalancePack, WalletCPack};
 use crate::models::block::{Block, Chain};
 use crate::models::db::MongoService;
 use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, TransferReq};
@@ -29,6 +30,7 @@ use crate::utils::formatter::Formatter;
 use crate::utils::response::{Response, TCPResponse};
 use crate::utils::struct_h::Struct_H;
 use crate::utils::test::response_formatter;
+use crate::utils::utils::{MyError, MyErrorTypes};
 use models::balance_pack;
 
 pub struct Handler{
@@ -74,7 +76,66 @@ impl Handler {
 
     }
 
+    pub fn get_wallet_from_network_and_save(address:String, stream: &mut TcpStream){
+        let servers =match  get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+                debug!("{}", err.to_string());
+                vec![]
+            }
+        };
+        let mut balance_pack_list:Vec<WalletCPack> = vec![];
 
+        for server in servers{
+           // get balance from other servers 
+           let wallet = get_remote_wallet(&server,
+                &address);
+           let wallet = match wallet {
+               Ok(data)=>{data},
+               Err(err)=>{
+                   error!("error ... {}", err);
+                   WalletC::default()
+               }
+           };
+
+
+           balance_pack_list.push(WalletCPack{ip_address:server.ip_address.to_owned(), wallet:wallet})
+
+        }
+
+        // for this certain wallet address, these are the balances in their balance pack 
+        // if there are 10 nodes in the network, then we will have 10 balances 
+        // we now have to do some voting 
+
+        let b_vote = Concensus::vote_wallet(balance_pack_list);
+
+        let vote_string = match serde_json::to_string(&b_vote){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        // we need to save this new wallet 
+        
+       let resp_message = Formatter::response_formatter(
+           "1".to_string(),
+            "Ok".to_string(), 
+            vote_string
+           );
+
+        TCPResponse::send_response_txt(resp_message, stream);
+        stream.flush();
+        return;
+    }
     pub fn get_balance_c(data:String, stream: &mut TcpStream){
         let mut request: GetBalanceReq = match  serde_json::from_str(data.as_str()) {
             Ok(data)=>{data},
@@ -302,6 +363,10 @@ impl Handler {
         match Transfer::transfer(request.sender, request.receiver, f32::from_str(request.amount.as_str()).unwrap(), request.transaction_id){
             Ok(_)=>{},
             Err(err)=>{
+                if err.to_string() == Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}).to_string(){
+                    // trigger get that wallet data from the network and store 
+                    debug!("{}", "There is a bug XXXXXXXXXXXXXXXXXXXXXXX")
+                }
                 error!("{}", err.to_string());
                 let response = Formatter::response_formatter(
                     "0".to_string(),
@@ -327,6 +392,9 @@ impl Handler {
         }
         return;
     }
+
+
+    
 
     // transfer ...
     pub fn transfer(data:String,stream:&mut Option<TcpStream>, is_broadcasted:String)->String{
@@ -574,54 +642,47 @@ impl Handler {
             )
     }
 
+
+    // get list of servers locally and send to remote server requesting for it
     pub fn get_servers_c(stream: &mut TcpStream){
-        let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
-        debug!("serverlist file path {}",data_path);
-        let mut file =match  File::open(data_path.clone()){
-            Ok(file)=>{file},
+
+        let servers = get_servers();
+        let servers = match servers{
+            Ok(data)=>{data},
             Err(err)=>{
-                error!("error opening file {}",err.to_string());
-                let response = GenericResponse{
-                    message : "Error fetching server list".to_string(),
-                    code : 0
-                };
+                error!("{}", err.to_string());
                 let response = Formatter::response_formatter(
                     "0".to_string(),
-                     "Error fetching server list ".to_string(), 
-                     err.to_string()
-                    );
-                
+                    "Error sending issues".to_string(),
+                    "".to_string()
+                );
                 TCPResponse::send_response_txt(response, stream);
-
                 return;
-            } 
-        };
-        let mut content = String::new();
-    
-        match file.read_to_string(&mut content){
-            Ok(_)=>{},
-            Err(err)=>{
-                error!(" error reading file {}",err.to_string());
-                let response = GenericResponse{
-                    message : "Error fetching server list".to_string(),
-                    code : 0
-                };
-                let response: String = Formatter::response_formatter(
-                    "0".to_string(),
-                     "Error  fetching server list".to_string(), 
-                     err.to_string()
-                    );
-
-                TCPResponse::send_response_txt(response, stream);
-                    return;
             }
-        }
-                
-        let response = Response::response_formatter(
+        };
+
+        // convert to string
+        let content = match serde_json::to_string(&servers){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                let err_response = Formatter::response_formatter(
+                    "0".to_string(),
+                    "Error converting to string".to_string(),
+                    "".to_string()
+                );
+                TCPResponse::send_response_txt(err_response, stream);
+                return;
+            }
+        };
+
+        debug!("content data to be sent {}", content.clone());      
+        let response = Formatter::response_formatter(
             "1".to_string(),
-             "Error persing data".to_string(), 
+             "0".to_string(), 
              content
             );
+           
         TCPResponse::send_response_txt(response, stream);
         return;
     }

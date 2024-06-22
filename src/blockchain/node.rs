@@ -13,6 +13,7 @@ use futures::executor::block_on;
 use futures::{FutureExt, TryFutureExt};
 use lettre::transport::smtp::commands::Data;
 use log::{debug, error, info};
+use tokio::net::tcp;
 
 use std::env::{self, current_dir};
 use std::str::FromStr;
@@ -22,12 +23,13 @@ use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
 use serde_json::to_string;
-use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_http, get_node_list_net, get_node_wallet_list_C, get_servers, save_server_list};
+use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_c, get_node_list_http, get_node_list_net, get_node_wallet_list_C, get_servers, save_server_list};
 use crate::blockchain::wallet::Wallet;
 use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
 use crate::models::wallet::MongoWallet;
+use crate::utils::env::get_env;
 use crate::utils::formatter::Formatter;
 use crate::utils::response::{Response, TCPResponse};
 
@@ -189,8 +191,115 @@ impl Node {
         //stream.flush().unwrap();
     }
 
+    pub fn discover_c()->Result<(), Box<dyn Error>>{
+        info!("Starting node discovery");
+        
+        let mut rough_node_list:Vec<ServerData> = vec![];
+
+        let servers = match  get_servers() {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error getting servers list locally{}", err);
+                return Err(err.into())
+            }
+        };
+
+       
+
+        // fetch server list of each initial node
+        for node in servers {
+            let c_server_list = get_node_list_c(&node);
+            let c_server_list =match c_server_list {
+                Ok(cs)=>{cs},
+                Err(err)=>{
+                    error!("{}", err);
+                    return Err(err.into())
+                }
+            };
+
+            //add each item in the remote server list the rough list
+            for s in c_server_list{
+                rough_node_list.push(s);
+            }
+
+           
+        }
 
 
+        // second level iteration. Going over all sync nodes childeren nodes
+        for node in rough_node_list.to_owned() {
+
+            // get all the node list in this node
+            // let c_server_list=  block_on(async {get_node_list_http(&node).await});
+            let c_server_list = get_node_list_c(&node);
+            let c_server_list =match c_server_list {
+                Ok(cs)=>{cs},
+                Err(err)=>{
+                    error!("{}", err);
+                    vec![]
+                    //return Err(err.into())
+                }
+            };
+
+            //add each item in the remote server list the rough list
+            for s in c_server_list{
+                rough_node_list.push(s);
+            }
+
+           
+        }
+        
+        // sort the rough list for unique enteries
+        //rough_node_list.sort();
+        let mut m: Vec<ServerData>= rough_node_list.into_iter().unique()
+        .map(|servers| servers)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+        debug!("sorted final data .. {:?}", m);
+
+        let mut i = 0;
+        let tcp_address = get_env("TCP_ADDRESS");
+        debug!("my tcp addres {}", tcp_address );
+       
+        m.retain(|server| server.ip_address != tcp_address);
+
+        // write the discovered nodes into the serverlist 
+        let data_string:String = serde_json::json!(m).to_string();
+
+        match Self::save_server_list(data_string){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("{}", err)
+            }
+        };
+
+        Ok(())
+    }
+
+
+    // save data to the server_list.json
+    pub fn save_server_list(data:String)->Result<(), Box<dyn Error> >{
+
+        let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
+        debug!("serverlist file path {}",data_path);
+    
+        let file = File::options().write(true).open(data_path);
+        let mut file =match file {
+            Ok(file) => { file },
+            Err(err) => { return Err(err.into()) }
+        };
+    
+        let write_ok = file.write_all(data.as_bytes());
+        let write_ok = match write_ok{
+            Ok(write_ok)=>{write_ok},
+            Err(err) => { return Err(err.into()) }
+        };
+    
+        
+        Ok(())
+    }
     // talks to other nodes and gets their node list, compares and establishes a truthful list
     // discover other nodes in the network
     pub async fn discover()->Result<(), Box<dyn Error>>{
@@ -379,6 +488,9 @@ impl Node {
         //wallet_list.append(&mut node_wallet_list);
      }
     }
+
+
+    
     pub async fn sync_wallets_new_node(){
         // get nodes
 

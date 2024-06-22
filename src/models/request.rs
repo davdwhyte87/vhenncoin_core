@@ -17,6 +17,12 @@ pub struct GetBalanceReq {
 
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct GetWalletReq {
+    pub address: String,
+}
+
+
 
 
 #[derive(Serialize, Deserialize)]

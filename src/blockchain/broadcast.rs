@@ -11,15 +11,17 @@ use actix_web::http;
 use log::{debug, error};
 use reqwest::header::CONTENT_TYPE;
 use crate::blockchain::wallet;
-use crate::models::request::GetBalanceReq;
+use crate::models::request::{GetBalanceReq, GetWalletReq};
 use crate::models::response::{GenericResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::{ServerData, ServerList};
-use crate::models::wallet::MongoWallet;
+use crate::models::wallet::{MongoWallet, WalletC};
 use crate::utils::constants;
 use crate::utils::formatter::Formatter;
 use crate::utils::struct_h::Struct_H;
 use crate::utils::utils::request_formatter;
 use reqwest;
+
+use super::node;
 
 pub fn get_servers() ->Result<Vec<ServerData>, Box<dyn Error>>{
     let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
@@ -114,6 +116,55 @@ pub fn save_server_list(data:String)->Result<(), Box<dyn Error> >{
     Ok(())
 }
 
+// talks to other nodes and gets their node list
+pub fn get_node_list_c(server_data:&ServerData)->Result<Vec<ServerData>, Box<dyn Error> >{
+    let final_message = Formatter::request_formatter(
+        constants::GET_NODE_LIST.to_owned(),
+        "0".to_string(),
+        "0".to_string(),
+        "0".to_string(),
+        "0".to_string()
+    );
+
+    let mut response = String::new();
+    match TcpStream::connect(server_data.ip_address.to_owned()) {
+        Ok(mut stream)=>{
+            // send data to ip computer
+            stream.write(final_message.as_ref());
+
+            let mut reader = BufReader::new(&stream);
+            
+            let _ = reader.read_to_string(&mut response);
+           
+        },
+        Err(err)=>{
+            error!("error parsing data {}",err.to_string());
+            return Err(err.into())
+        }
+    }
+    
+    debug!("response data .. {}", response);
+
+
+    let data_set :Vec<&str>= response.split("\n").collect();
+    let data = match data_set.get(2){
+        Some(data)=>{data},
+        None =>{return  Err(Box::from("No data in response ")); }
+    }; 
+
+    debug!("response data .. {}", data);
+
+    let nodes = serde_json::from_str::<Vec<ServerData>>(&data);
+    let nodes = match nodes{
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("error {}",err.to_string());  
+            return Err(err.into());
+        }
+    };
+
+    Ok(nodes)
+}
 // talks to other nodes and gets their node list 
 pub async fn get_node_list_http(server_data:&ServerData)->Result<Vec<ServerData>, Box<dyn Error> >{
     let url =format!("{}/send_message", server_data.http_address.to_owned());
@@ -557,7 +608,53 @@ pub fn get_node_wallet_list_C(server_data:&ServerData)-> Result<Vec<String>, Box
 
 }
 
+pub fn get_remote_wallet(server_data:&ServerData, address:&String)->Result<WalletC, Box<dyn Error>>{
+    let request = Struct_H::struct_to_string(&GetWalletReq{address:address.to_owned()});
+    let message = Formatter::request_formatter(
+        constants::GET_NODE_BALANCE_ACTION.to_owned(),
+        request,
+        "".to_string(),
+        "".to_string(),
+        "0".to_string()
+    );
+    let mut response = String::new();
+    match TcpStream::connect(server_data.ip_address.to_owned()) {
+        Ok(mut stream)=>{
+            // send data to ip computer
+            stream.write(message.as_ref());
+            
+            let mut reader = BufReader::new(&stream);
+            
+            let _ = reader.read_to_string(&mut response);
 
+            stream.flush();
+        },
+        Err(err)=>{
+            error!("error parsing data {}",err.to_string());
+            return Err(err.into())
+        }
+    }
+
+    debug!("remote balance response ..{}", response);  
+        // brrak down response 
+        let data_set :Vec<&str>= response.split("\n").collect();
+        let data = match data_set.get(2){
+            Some(data)=>{data},
+            None =>{return Err(Box::from("Could not break response down"))}
+        };
+    
+        // get message  
+        let wallet =  match serde_json::from_str::<WalletC>(data){
+            Ok(data)=>{data},
+            Err(err)=>{
+                debug!("{}", err.to_string());
+               WalletC::default()
+            }
+        };
+
+        Ok(wallet)
+
+}
 pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Result<f32, Box<dyn Error>>{
     let request = Struct_H::struct_to_string(&GetBalanceReq{address:address.to_owned()});
     let message = Formatter::request_formatter(

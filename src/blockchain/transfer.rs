@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::Block;
 use crate::utils::time::get_date_time;
+use crate::utils::utils::{MyError, MyErrorTypes};
 use base64::engine::general_purpose;
 use futures_util::AsyncReadExt;
 use jsonwebtoken::crypto::sign;
@@ -312,7 +313,7 @@ impl Transfer {
         let sender_exists = Wallet::wallet_exists(&sender);
         let receiver_exists = Wallet::wallet_exists(&receiver);
         if sender_exists!= true || receiver_exists !=true {
-            return Err(Box::from("Wallet does not exist"))
+            return Err(Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}))
         }
         //check if sender has the money available
         let mut sender_chain = match Wallet::get_wallet_c(&sender){

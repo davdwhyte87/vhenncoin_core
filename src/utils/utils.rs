@@ -1,3 +1,5 @@
+use core::fmt;
+
 
 
 pub fn request_formatter(
@@ -20,3 +22,28 @@ pub fn request_formatter(
         r"\n"
         );
 }
+
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum MyErrorTypes {
+    TransferWalletNotFound
+}
+
+
+#[derive(Clone, Debug)]
+pub struct MyError{
+   pub error: MyErrorTypes
+}
+impl fmt::Display for MyErrorTypes{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TransferWalletNotFound=> write!(f,"Transfer wallet not found")
+        }
+    }
+}
+impl fmt::Display for MyError{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.error)
+    }
+}
+impl std::error::Error for MyError{}

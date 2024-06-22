@@ -59,32 +59,13 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 
 
-#[actix_web::main]
-async fn main() {
+fn main() {
     // test_dd();
    //utils::test::cons();
 //    return;
     env::set_var("RUST_BACKTRACE", "full");
 
-    // let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
-    //     Ok(kv_store)=>{kv_store},
-    //     Err(err)=>{return println!("{}",err.to_string())}
-    // };
-    // let chain = Chain{ chain: vec![Block{
-    //     id: "hcb d n".to_string(),
-    //     sender_address: "sender".to_string(),
-    //     receiver_address: "".to_string(),
-    //     date_created: "".to_string(),
-    //     hash: "jndljvnkfj".to_string(),
-    //     amount: 0.0,
-    //     public_key: "".to_string(),
-    // }] };
-    // match kv_store.save(Some(chain)){
-    //     Ok(_)=>{println!("successful ")},
-    //     Err(err)=>{return println!("{}",err.to_string())}
-    // }
 
-    //Wallet::gen()
     let stdout = ConsoleAppender::builder().build();
     let config = Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
@@ -95,203 +76,13 @@ async fn main() {
 
     dotenv::dotenv().ok();
 
-
-    // discover other nodes
-    // match Node::discover().await{
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         error!("discovery error .... {}", err)
-    //     }
-    // }
-
-    // notify nodes of new server in the network
-    // match Node::notify_servers_of_new_node().await {
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         error!("notify nodes {}", err)
-    //     }
-    // }
-
-   
-
-    
-    //get_servers().expect("Erro getting server list");
-    // start http
-    // let http_port = match env::var("HTTP_PORT"){
-    //     Ok(data)=>{data},
-    //     Err(err)=>{
-    //         error!("{}",err);
-    //         "8000".to_string()
-    //     }
-    // };
-    // let srv = HttpServer::new(|| {
-    //     App::new()
-    //         .service(hello)
-    //         .service(route_to_tcp)
-    //
-    // })
-    //     .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
-    //     .unwrap()
-    //     .run();
-    //
-    //
-    // let srv_handle = srv.handle();
-    // rt::spawn(srv);
-    // info!("running http server on localhost:{}", http_port);
-    //
-    // srv_handle.stop(false).await;
-    // use futures::executor::block_on;
-    // let mut rt = tokio::runtime::Runtime::new().unwrap();
-    // let local = tokio::task::LocalSet::new();
-    // local.block_on(&mut rt, async move {
-    //     tokio::task::spawn_local( async move  { start_http_server().await });
-    // });
-
-    // start http server if configed to
-    let http_on = match env::var("HTTP_ON"){
-        Ok(data)=>{data},
+    match Node::discover_c() {
+        Ok(_)=>{},
         Err(err)=>{
-            error!("{}",err);
-            "8000".to_string()
+            debug!("{}", err.to_string());
         }
-    };
-    if (http_on == "1"){
-        
-        // let mut rt = tokio::runtime::Builder::new_multi_thread().build().unwrap();
-        // let task = start_http_server();
-        // rt.spawn(task);
-
-        let db = MongoService::init().await;
-        
-        let db_data = Data::new(db);
-
-         // sync wallets
-        Node::sync_wallets_new_node().await;
-
-        let http_port = match env::var("PORT"){
-            Ok(data)=>{data},
-            Err(err)=>{
-                error!("{}",err);
-                "8000".to_string()
-            }
-        };
-        let mongodb_on = match env::var("MONGODB_ON"){
-            Ok(data)=>{data},
-            Err(err)=>{
-                error!("{}",err);
-                "8000".to_string()
-            }
-        };
-
-        // let database = match MongoService::get_db(){
-        //     Some(database)=>{database.db.to_owned()},
-        //     None=>{return }
-        // };
-
-        // let update_schema_result = WalletService::update_schema(&database).await;
-        // let update_schema_result = match  update_schema_result {
-        //     Ok(_)=>{},
-        //     Err(err)=>{
-        //         error!("error updating schema {}", err);
-               
-        //     }
-            
-        // };
-
-       
-
-
-        debug!("port number  {}", http_port);
-        HttpServer::new(|| {
-            App::new()
-                .service(hello)
-                .service(route_to_tcp)
-
-        })
-            .bind(("0.0.0.0", u16::from_str(http_port.as_str()).unwrap()))
-            .unwrap()
-            .run()
-            .await;
-    }else {
-        Node::serve();
     }
-
-
-    
-
-    //rt.block_on(task);
-    
-    
-
-    // h_handle.join().unwrap()
-    // start_http_server();
-    // start node tcp server
-
-    // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
-    // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());
-
-    // match transfer::Transfer::transfer("David".to_string(), "john".to_string(), 10.0) {
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         println!("{:?}", err)
-    //     }
-    // }
-    // match transfer::Transfer::validate("Vcfd8019b4ace8b3b2ee8a7da662a1baaf2bf3f2201001fc0d1757d04cd31980d9".to_string(),
-    //                                    "Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
-    //
-    // ) { }
-
-    // match transfer::Transfer::sign_messafe("LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ0KTUlHckFnRUFBaUVBeS9Ub05MVW5pakR4NytjZk8yZ3pnVEM5ZGdqbENncDV5eVlCR0tJejlCa0NBd0VBQVFJZw0KQXk0NGlNbmlhZmRGYnBaT0dHRVJuSVVBaUFEKy9IOXQ3Tk55V1R6c3VBRUNFUURYbHJqTk8wekQwaVlpRmM1UQ0KUlZhWkFoRUE4akFCZkFxT0ZITjZsdW1kcWgxNWdRSVJBS0V5N3ExdVdLRFhBbkpjRWE4Tm1Za0NFQ3lBR2FXNw0KSXNRck85bEM3ODkwUHdFQ0VRQ1JIME1Ga1N5RW9MWU94R1d1aWJVRw0KLS0tLS1FTkQgUlNBIFBSSVZBVEUgS0VZLS0tLS0NCg".to_string(),
-    // "Hello".to_string()) {
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         println!("{:?}", err)
-    //     }
-    // }
-
-    // match transfer::Transfer::verify("LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tDQpNQ2dDSVFETDlPZzB0U2VLTVBIdjV4ODdhRE9CTUwxMkNPVUtDbm5MSmdFWW9qUDBHUUlEQVFBQg0KLS0tLS1FTkQgUlNBIFBVQkxJQyBLRVktLS0tLQ0K".to_string(),
-    //                                  "M8EnvyXyi9fI_FmDPjChXRLlCQxpkZRVQec1WsPYXqU".to_string(),
-    //                                  "Hello".to_string()){
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         println!("{:?}", err.to_string())
-    //     }
-    // };
-    // match wallet::Wallet::get_balance(&"David".to_string()){
-    //     Ok(data)=>{println!("{:?}", data)},
-    //     Err(err)=>{
-    //         println!("{:?}", err)
-    //     }
-    // }
-    // transfer::Transfer::edd_sign("MFMCAQEwBQYDK2VwBCIEIN-TKDHHhxdhe1HgXuoqhBf4AV2gL5mMU5B1tDzrXT3aoSMDIQBOwJ1dFomg3tbRbXRnGZja545SWrbtvHq7hezTbH3h6Q".to_string(),
-    // "hello this is some cary shit man i am teling you".to_string());
-    // transfer::Transfer::edd_verify("TsCdXRaJoN7W0W10ZxmY2ueOUlq27bx6u4Xs02x94ek".to_string(),
-    //     "z0XcX93FV7vmo6V643uxCiSQr7hAAamHma5qoyUZYaVv66EfGwfO2xXE1Scr2QW7O2CaNKxmdTlCqsYf0KXEAQ".to_string(),
-    // "hello".to_string());
-    // transfer::Transfer::generate_wallet()
-    // wallet::Wallet::generate_key();
-    // wallet::Wallet::generate_key();
-    // HttpServer::new(move|| {
-    //     App::new()
-    //
-    //
-    //         // USER CONTROLLERS
-    //
-    //         .service(
-    //             // all authenticated endpoints
-    //             web::scope("api/v1/")
-    //                 .service(wallet_controller::create_wallet)
-    //         )
-    //         // .service(user_controller::create_user)
-    //         // .service(user_controller::login_user)
-    //         // .service(power_ups_controller::use_power_up)
-    //         // .service(user_controller::get_code)
-    //         //
-    // })
-    //     .bind(("127.0.0.1", 80))?
-    //     .run()
-    //     .await
-
+    Node::serve();
 
 }
 
