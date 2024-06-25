@@ -14,6 +14,7 @@ use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp
 use crate::blockchain::concensus::Concensus;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
+use crate::blockchain::node::Node;
 use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::{self, Wallet};
 use crate::models;
@@ -360,7 +361,7 @@ impl Handler {
 
         debug!("transaction ID {}", request.transaction_id);
 
-        match Transfer::transfer(request.sender, request.receiver, f32::from_str(request.amount.as_str()).unwrap(), request.transaction_id){
+        match Transfer::transfer(request.sender, request.receiver, f32::from_str(request.amount.as_str()).unwrap(), request.transaction_id, request.sender_password){
             Ok(_)=>{},
             Err(err)=>{
                 if err.to_string() == Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}).to_string(){
@@ -812,7 +813,7 @@ impl Handler {
             Err(err)=>{
                 error!("Request error ... {}", err);
                 // return  format!("0{}{}",r"\n","Error converting to string");
-                let response = Response::response_formatter(
+                let response = Formatter::response_formatter(
                     "0".to_string(),
                      "Error converting to string".to_string(), 
                      err.to_string()
@@ -823,7 +824,7 @@ impl Handler {
             }
         };
         // save to disk
-        match save_server_list(data_string){
+        match Node::save_server_list(data_string){
             Ok(_)=>{},
             Err(err)=>{
                 error!("saving list to disk {}", err);
@@ -838,7 +839,7 @@ impl Handler {
             }
         };
         // return format!("1 {}{}",r"\n","Node added successfully");
-        let response = Response::response_formatter(
+        let response = Formatter::response_formatter(
             "1".to_string(),
              "Node added successfully".to_string(), 
              "".to_string()
@@ -1132,6 +1133,26 @@ impl Handler {
              wallets_string
             )
 
+    }
+
+
+    // zips chains and sends the data to the client computer 
+    pub fn get_chain_zip(stream:&mut TcpStream){
+        Node::zipchain();
+        
+        let mut buf = [0; 4096];
+        stream.set_write_timeout(None).unwrap();
+        let mut file = File::open("data.zip").unwrap();
+        loop {
+            let n = file.read(&mut buf).unwrap();
+            
+            if n == 0 {
+                // reached end of file
+                break;
+            }
+            
+            let _ = stream.write_all(&buf[..n]);
+        } 
     }
 
 }

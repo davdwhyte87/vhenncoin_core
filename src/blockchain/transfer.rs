@@ -306,7 +306,7 @@ impl Transfer {
         return Ok(())
     }
     // transfer value from one wallet to another
-    pub fn transfer(sender:String, receiver:String, amount:f32, transaction_id:String)->Result<(), Box<dyn Error>>{
+    pub fn transfer(sender:String, receiver:String, amount:f32, transaction_id:String, password: String)->Result<(), Box<dyn Error>>{
         
         // get sender public key from last block
         // check if both wallets exist
@@ -347,6 +347,21 @@ impl Transfer {
         if sender_balance < amount{
             return Err(Box::from("Insufficient funds"))
         }
+
+        // check for password
+
+        let mut hasher = Sha256::new();
+
+        // write input message
+        hasher.update(password);
+
+        // read hash digest and consume hasher
+        let result = hasher.finalize();
+        let hash = format!("{:X}", result);
+        if sender_chain.password_hash != hash{
+            return  Err(Box::from("Unauthorized to make transfer"))
+        }
+
         // create minus block
 
         let mut sender_block = Block{

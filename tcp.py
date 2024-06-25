@@ -1,3 +1,4 @@
+import shutil
 import socket
 print("connecting ...")
 host = "127.0.0.1"
@@ -7,7 +8,14 @@ s.connect((host, port))
 CREATE_WALLET = b'CreateWallet\n{"address":"jane123","password":"12345","wallet_name":"sudo"}\n0\n0\n0\n'
 TRANSFER = b'Transfer\n{"sender":"nuto","receiver":"jane123","amount":"1.2","transaction_id":"118990f999","sender_password":"123456"}\n0\n0\n0\n'
 GET_BALANCE = b'GetBalance\n{"address":"brunominto"}\n0\n0\n0\n'
-s.sendall(TRANSFER)
-data = s.recv(1024)
-print('Received', repr(data))
+GET_CHAIN_ZIP = b'GetZipChain\n0\n0\n0\n0\n'
+s.sendall(GET_CHAIN_ZIP)
+# data = s.recv(4000)
+
+with open('download.zip','wb') as out:
+    inp = s.makefile('rb')
+    shutil.copyfileobj(inp, out)
+
+# print('Received', repr(data))
+
 s.close()

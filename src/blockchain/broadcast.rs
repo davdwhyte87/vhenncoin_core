@@ -327,6 +327,44 @@ pub async fn  notify_new_node_http(server_data:&ServerData, new_node:&ServerData
 }
 
 
+
+pub fn notify_network_new_node_bc(node:&ServerData, new_node:&ServerData)->Result<(), Box<dyn Error>>{
+    // conver node data into string 
+    let nn_string = match serde_json::to_string(new_node){
+        Ok(new_node_string)=>{new_node_string},
+        Err(err)=>{
+            error!("Request error ... {}", err);
+            return Err(err.into())
+        }
+    };
+    let message = Formatter::request_formatter(
+        constants::ADD_NODE.to_owned(),
+        nn_string,
+        "".to_string(),
+        "".to_string(),
+        "0".to_string()
+    );
+
+    let mut response = String::new();
+    match TcpStream::connect(node.ip_address.to_owned()) {
+        Ok(mut stream)=>{
+            // send data to ip computer
+            stream.write(message.as_ref());
+            
+            // let mut reader = BufReader::new(&stream);
+            
+            // let _ = reader.read_to_string(&mut response);
+
+            stream.flush();
+        },
+        Err(err)=>{
+            error!("error parsing data {}",err.to_string());
+            return Err(err.into());
+        }
+    }
+
+    Ok(())
+}
 // telll other servers about the new request
 pub fn broadcast_request_tcp(action:String, message:String){
     // get servers for the node 

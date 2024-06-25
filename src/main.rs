@@ -22,6 +22,7 @@ mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
 use sha2::digest::consts::U256;
+use utils::env::get_env;
 use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
@@ -61,7 +62,7 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 fn main() {
     // test_dd();
-   //utils::test::cons();
+//    utils::test::zip();
 //    return;
     env::set_var("RUST_BACKTRACE", "full");
 
@@ -76,10 +77,21 @@ fn main() {
 
     dotenv::dotenv().ok();
 
+    if get_env("TCP_ADDRESS") == ""{
+        error!("IP address not configured");
+        return ;
+    }
+
     match Node::discover_c() {
         Ok(_)=>{},
         Err(err)=>{
             debug!("{}", err.to_string());
+        }
+    }
+    match Node::notifiy_network_new_node(){
+        Ok(_)=>{}, 
+        Err(err)=>{
+            debug!("{}", err.to_string()); 
         }
     }
     Node::serve();

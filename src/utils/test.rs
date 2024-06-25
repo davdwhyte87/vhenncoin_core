@@ -1,7 +1,9 @@
-use std::vec;
+use std::{env::current_dir, fs::File, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, path::Path, vec};
 
 use log::debug;
 use redb::{Database, TableDefinition};
+use walkdir::WalkDir;
+use zip::{write::SimpleFileOptions, ZipWriter};
 
 
 
@@ -93,6 +95,72 @@ pub fn response_formatter(code:String, message:String, data:String)->String{
     return format!("{}{}{}{}{}{}",code,"\n",message,"\n",data,"\n");
 }
 
+pub fn zip(){
+    let path = Path::new("example.zip");
+    let file = File::create(&path).unwrap();
+    let options = SimpleFileOptions::default()
+    .compression_method(zip::CompressionMethod::Bzip2)
+    .unix_permissions(0o755);
+
+    let mut zip = ZipWriter::new(file);
+    let mut buffer = Vec::new();
+    let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/data");
+    for e in WalkDir::new(data_path.clone()).into_iter().filter_map(|e| e.ok()) {
+        
+       let name = e.path().strip_prefix(&data_path).unwrap().to_string_lossy();
+        if e.metadata().unwrap().is_file() {
+            
+            println!("creating file : {}", name);
+            zip.start_file(name, options);
+            let mut f = match File::open(e.path()){
+                Ok(data)=>{data},
+                Err(err)=>{
+                    println!("error reading file {}", err.to_string());
+                    return;
+                }
+            };
+            
+            f.read_to_end(&mut buffer);
+            zip.write_all(&buffer);
+            buffer.clear();
+        }else {
+            println!("creating folder : {}",name);
+            zip.add_directory(name, options);
+        }
+    }
+
+    zip.finish();
+}
+pub fn file(){
+   
+    let listener = TcpListener::bind("127.0.0.1:4321").unwrap();
+    let mut buf = [0; 4096];
+    for stream in listener.incoming() {
+        let mut stream = stream.unwrap();
+        stream.set_write_timeout(None).unwrap();
+        let mut file = File::open("white_paper.txt").unwrap();
+        //let mut tcp = TcpStream::connect("127.0.0.1:4321").unwrap();
+        // let reader = BufReader::new(file);
+        // for line in reader.lines() {
+        //     let line = line.unwrap();
+        //     let _ = stream.write(line.as_bytes());
+        // }
+        loop {
+            let n = file.read(&mut buf).unwrap();
+            
+            if n == 0 {
+                // reached end of file
+                break;
+            }
+            
+            let _ = stream.write_all(&buf[..n]);
+        }
+       
+    }
+    
+    
+
+}
 pub fn cons(){
     let balance_pack_list = vec![
         BalancePack{

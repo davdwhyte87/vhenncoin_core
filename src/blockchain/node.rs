@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::path::Path;
 use awc::error;
 use bigdecimal::num_traits::float;
 use bigdecimal::ToPrimitive;
@@ -13,7 +14,11 @@ use futures::executor::block_on;
 use futures::{FutureExt, TryFutureExt};
 use lettre::transport::smtp::commands::Data;
 use log::{debug, error, info};
+use log4rs::Handle;
 use tokio::net::tcp;
+use walkdir::WalkDir;
+use zip::write::SimpleFileOptions;
+use zip::ZipWriter;
 
 use std::env::{self, current_dir};
 use std::str::FromStr;
@@ -29,11 +34,12 @@ use crate::controllers::wallet_controller::create_wallet;
 use crate::handlers::handlers::Handler;
 use crate::models::server_list::ServerData;
 use crate::models::wallet::MongoWallet;
+use crate::utils::constants;
 use crate::utils::env::get_env;
 use crate::utils::formatter::Formatter;
 use crate::utils::response::{Response, TCPResponse};
 
-use super::broadcast::{get_node_wallet_list, get_seed_nodes, get_wallet_data, notify_new_node_http};
+use super::broadcast::{get_node_wallet_list, get_seed_nodes, get_wallet_data, notify_network_new_node_bc, notify_new_node_http};
 
 
 pub struct Node {
@@ -168,6 +174,9 @@ impl Node {
             "GetWalletData"=>{
                 Handler::get_single_wallet_c(message.clone(), &mut stream);
             },
+            "GetZipChain"=>{
+                Handler::get_chain_zip(&mut stream);
+            }
     
             _ => {}
         }
@@ -285,16 +294,22 @@ impl Node {
         let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/server_list.json");
         debug!("serverlist file path {}",data_path);
     
-        let file = File::options().write(true).open(data_path);
+        let file = File::options().truncate(true).write(true).open(data_path);
         let mut file =match file {
             Ok(file) => { file },
-            Err(err) => { return Err(err.into()) }
+            Err(err) => { 
+                error!("error opening data file {}", err.to_string());
+                return Err(err.into()) 
+            }
         };
     
         let write_ok = file.write_all(data.as_bytes());
         let write_ok = match write_ok{
             Ok(write_ok)=>{write_ok},
-            Err(err) => { return Err(err.into()) }
+            Err(err) => {
+                error!("error writing to data file {}", err.to_string());
+                 return Err(err.into()) 
+                }
         };
     
         
@@ -415,6 +430,28 @@ impl Node {
 
     }
 
+    pub fn notifiy_network_new_node()->Result<(), Box<dyn Error>>{
+        let nodes = get_servers();
+        let nodes = match nodes {
+            Ok(nodes)=>{nodes},
+            Err(err)=>{
+                error!("get seed nodes error ... {}", err);
+                return Err(err.into());
+            }
+        };
+        let new_node = ServerData{
+            id:"".to_string(),
+            ip_address:get_env("TCP_ADDRESS"),
+            public_key:"".to_string(),
+            http_address: "".to_string()
+        };
+        for node in nodes{
+            let _ = notify_network_new_node_bc(&node, &new_node);
+        }
+
+        Ok(())
+    
+    }
 
 
     // this helps servers in this nodes server list know about it. 
@@ -576,6 +613,46 @@ impl Node {
         for node in nodes{
 
         }
+    }
+
+
+    // zip the nodes local chain 
+    pub fn zipchain(){
+        let path = Path::new("data.zip");
+        let file = File::create(&path).unwrap();
+        let options = SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Bzip2)
+        .unix_permissions(0o755);
+    
+        let mut zip = ZipWriter::new(file);
+        let mut buffer = Vec::new();
+        let data_path: String = format!("{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(), "/data");
+        for e in WalkDir::new(data_path.clone()).into_iter().filter_map(|e| e.ok()) {
+            
+           let name = e.path().strip_prefix(&data_path).unwrap().to_string_lossy();
+            if e.metadata().unwrap().is_file() {
+                
+                println!("creating file : {}", name);
+                zip.start_file(name, options);
+                let mut f = match File::open(e.path()){
+                    Ok(data)=>{data},
+                    Err(err)=>{
+                        println!("error reading file {}", err.to_string());
+                        return;
+                    }
+                };
+                
+                f.read_to_end(&mut buffer);
+                zip.write_all(&buffer);
+                buffer.clear();
+            }else {
+                println!("creating folder : {}",name);
+                zip.add_directory(name, options);
+            }
+        }
+    
+        zip.finish();
+        
     }
 
 }
