@@ -6,6 +6,8 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
+use std::thread::{self, Thread};
+use std::time::Duration;
 use awc::error;
 use bigdecimal::num_traits::float;
 use bigdecimal::ToPrimitive;
@@ -147,6 +149,7 @@ impl Node {
         match *action_name{
     
             "CreateWallet" =>{
+                // thread::sleep(Duration::from_secs(5));
                 debug!("Create wallet now");
                 Handler::create_wallet_tcp(&message, &mut stream, is_broadcasted);
             },
@@ -154,6 +157,7 @@ impl Node {
                 Handler::transfer_c(message.clone(), &mut stream, is_broadcasted.clone());
             },
             "GetBalance"=>{
+                thread::sleep(Duration::from_secs(5));
                Handler::get_balance_c(message.clone(), &mut stream);
             },
             "GetNodeBalance"=>{

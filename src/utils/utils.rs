@@ -1,4 +1,4 @@
-use core::fmt;
+use core::{fmt, num};
 
 
 
@@ -47,3 +47,11 @@ impl fmt::Display for MyError{
     }
 }
 impl std::error::Error for MyError{}
+
+
+
+// this helps us round up numbers to 3 decimal places
+pub fn round_number(number:f32)->f32{
+    let y = (number * 1000.0).round() / 1000.0;
+    return y ;
+}

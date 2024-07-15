@@ -25,6 +25,7 @@ hkdf = "0.12.4"
 hyper = {version = "1.2.0", features = ["full"]}
 itertools = "0.12.1"
 jsonwebtoken = "8.2.0"
+k256 = "0.13.3"
 lazy_static = "1.4.0"
 lettre = "0.10.1"
 log = "0.4"

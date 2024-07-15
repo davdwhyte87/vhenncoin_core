@@ -49,6 +49,12 @@ impl Wallet {
 
     // check if data path exists
     pub fn wallet_exists (address:&String)->bool{
+        if address.is_empty(){
+            return false;
+        }
+        if address.contains(char::is_whitespace){
+            return false;
+        }
         let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),r"\data\" ,address.to_owned());
         println!("{}", data_path);
         if !Path::new(data_path.as_str()).exists() {

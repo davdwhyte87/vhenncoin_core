@@ -724,10 +724,19 @@ pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Resu
 
     // brrak down response 
     let data_set :Vec<&str>= response.split("\n").collect();
+    let code = match data_set.get(0){
+        Some(data)=>{data},
+        None =>{return Err(Box::from("Could not break response down"))}
+    };
     let data = match data_set.get(2){
         Some(data)=>{data},
         None =>{return Err(Box::from("Could not break response down"))}
     };
+
+    // terminate and return error if we get no response from server
+    if *code == "0"{
+        return Err(Box::from("could not get data from remote server"))
+    }
 
     // get message  
     use std::str::FromStr;

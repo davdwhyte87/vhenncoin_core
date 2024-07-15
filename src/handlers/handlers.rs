@@ -7,7 +7,7 @@ use std::str::FromStr;
 use futures::executor::block_on;
 use futures_util::future::err;
 use itertools::Format;
-use log::{debug, error};
+use log::{debug, error, info};
 use log4rs::append::file;
 use tokio::runtime::Runtime;
 use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_remote_wallet, get_servers, save_server_list};
@@ -153,6 +153,18 @@ impl Handler {
             }
         };
 
+        // check if the wallet exists 
+        if !Wallet::wallet_exists(&request.address){
+            debug!("{}","Wallet does not exist");
+            let response = Formatter::response_formatter(
+                "0".to_string(),
+                    "Wallet does not exist".to_string(), 
+                    "Wallet does not exist".to_string()
+                );
+            TCPResponse::send_response_txt(response, stream);
+            return;    
+        }
+
         let servers =match  get_servers() {
             Ok(data)=>{data},
             Err(err)=>{
@@ -173,19 +185,17 @@ impl Handler {
         balance_pack_list.push(BalanceCPack{ip_address:get_env("TCP_ADDRESS"), balance:n_balance});
 
         for server in servers{
-           // get balance from other servers 
-           let r_balance = get_remote_node_balance_c(&server,
-                &request.address);
-           let r_balance = match r_balance {
-               Ok(data)=>{data},
+           // get balance from other servers and add to a list of votes
+           match  get_remote_node_balance_c(&server,
+            &request.address) {
+               Ok(data)=>{
+                balance_pack_list.push(BalanceCPack{ip_address:server.ip_address.to_owned(), balance:data})
+               },
                Err(err)=>{
                    error!("error ... {}", err);
-                   0.0
+                   // ignore and pass if there is no good response from getting remote balance
                }
-           };
-
-
-           balance_pack_list.push(BalanceCPack{ip_address:server.ip_address.to_owned(), balance:r_balance})
+           };  
 
         }
 
@@ -522,6 +532,17 @@ impl Handler {
                 return;
             }
         };
+
+        // check if there is white space in the wallet address
+        if request.address.contains(char::is_whitespace){
+            info!("{}", "address contains white space");
+            let response = Formatter::response_formatter(
+            "0".to_string(),
+                "address contains white space".to_string(),
+                "".to_string()                );
+            TCPResponse::send_response_txt(response,  stream);
+            return;  
+        }
         debug!("Done decoding message");
         let resp = match Wallet::create_wallet_r(request.address,request.password){
             Ok(data)=>{
