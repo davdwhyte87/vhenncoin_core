@@ -4,6 +4,7 @@ use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::str::FromStr;
+use bigdecimal::BigDecimal;
 use futures::executor::block_on;
 use futures_util::future::err;
 use itertools::Format;
@@ -178,7 +179,7 @@ impl Handler {
             Ok(data)=>{data},
             Err(err)=>{
                 debug!("{}", err.to_string());
-                0.00
+                BigDecimal::from_str("0.0").unwrap()
             }
         };
         // push the local nodes balance for voting 
@@ -209,7 +210,7 @@ impl Handler {
        let resp_message = Formatter::response_formatter(
            "1".to_string(),
             "Ok".to_string(), 
-            b_vote.balance.to_string()
+            b_vote.balance.with_scale(3).to_string()
            );
 
         TCPResponse::send_response_txt(resp_message, stream);
@@ -249,8 +250,8 @@ impl Handler {
 
         // get chains and last block for latest balance data
         let balance =match  wallet.chain.chain.last(){
-            Some(data)=>{data.balance},
-            None=>{0.0}
+            Some(data)=>{data.to_owned().balance},
+            None=>{BigDecimal::from_str("0.0").unwrap()}
         };
 
         let balance_resp = Formatter::response_formatter(
@@ -327,7 +328,7 @@ impl Handler {
                 Ok(data)=>{data},
                 Err(err)=>{
                     error!("error ... {}", err);
-                    0.0
+                    BigDecimal::from_str("0.0").unwrap()
                 }
             };
 
@@ -371,7 +372,7 @@ impl Handler {
 
         debug!("transaction ID {}", request.transaction_id);
 
-        match Transfer::transfer(request.sender, request.receiver, f32::from_str(request.amount.as_str()).unwrap(), request.transaction_id, request.sender_password){
+        match Transfer::transfer(request.sender, request.receiver, BigDecimal::from_str(&request.amount).unwrap(), request.transaction_id, request.sender_password){
             Ok(_)=>{},
             Err(err)=>{
                 if err.to_string() == Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}).to_string(){
@@ -447,7 +448,7 @@ impl Handler {
             Transfer::transfer_http(
                 request.sender.to_owned(),
                 request.receiver.to_owned(),
-                f32::from_str(request.amount.as_str()).unwrap(),
+                BigDecimal::from_str(&request.amount).unwrap(),
                 request.transaction_id,
                 request.sender_password
         ).await

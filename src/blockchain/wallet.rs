@@ -2,6 +2,8 @@ use std::borrow::Borrow;
 use std::env::current_dir;
 use std::error::Error;
 use std::fmt::format;
+use std::str::FromStr;
+use bigdecimal::BigDecimal;
 use sha2::{Sha256, Digest};
 use std::{env, fs, str, vec};
 use std::fs::{File, OpenOptions, read};
@@ -123,7 +125,7 @@ impl Wallet {
         return Ok(wallets)
     }
 
-    pub async fn get_balance_http(address:String)-> Result<f32, Box<dyn Error>> {
+    pub async fn get_balance_http(address:String)-> Result<BigDecimal, Box<dyn Error>> {
         let mongodb_on = match env::var("MONGODB_ON") {
             Ok(data) => { data },
             Err(err) => {
@@ -146,16 +148,18 @@ impl Wallet {
                 Err(err)=>{return Err(err.into())}
             };
 
-            let chain = match wallet.chain.chain.last(){
-                Some(chain)=>{chain},
+            match wallet.chain.chain.last(){
+                Some(chain)=>{
+                    return Ok(chain.to_owned().balance);
+                },
                 None=>{
                     return  Err(Box::from("Problem with chain"))
                 }
             };
-            return Ok(chain.balance)
+           
         }
 
-        return Ok(0.00);
+        return Ok(BigDecimal::from_str("0.0").unwrap());
     }
     pub async fn create_wallet_http(address:String, public_key:String, password:String)-> Result<(), Box<dyn Error>>{
         let mongodb_on = match env::var("MONGODB_ON"){
@@ -178,10 +182,10 @@ impl Wallet {
                 receiver_address: address.to_owned(),
                 date_created: "".to_string(),
                 hash: "".to_string(),
-                amount: 100.0,
+                amount: BigDecimal::from_str("0.0").unwrap(),
                 prev_hash:"000000000".to_string(),
                 public_key: "".to_string(),
-                balance: 100.0,
+                balance: BigDecimal::from_str("0.0").unwrap(),
                 trx_h: Some("jooli".to_string())
             };
 
@@ -354,10 +358,10 @@ impl Wallet {
             receiver_address: address.to_owned(),
             date_created: get_date_time(),
             hash: "".to_string(),
-            amount: 0.0,
+            amount: BigDecimal::from_str("0.0").unwrap(),
             prev_hash:"000000000".to_string(),
             public_key: pair.public_key.clone(),
-            balance: 0.0,
+            balance: BigDecimal::from_str("0.0").unwrap(),
             trx_h: Some("000".to_string())
         };
         
@@ -553,7 +557,7 @@ impl Wallet {
         debug!("{}", res_data.value()  );
         return Ok(())  
     }
-    pub fn get_balance_c(address:&String)->Result<f32, Box<dyn Error>>{
+    pub fn get_balance_c(address:&String)->Result<BigDecimal, Box<dyn Error>>{
         let wallet = match Wallet::get_wallet_c(address){
             Ok(data)=>{data},
             Err(err)=>{
@@ -564,8 +568,8 @@ impl Wallet {
 
         // get chains and last block for latest balance data
         let balance =match  wallet.chain.chain.last(){
-            Some(data)=>{data.balance},
-            None=>{0.0}
+            Some(data)=>{data.to_owned().balance},
+            None=>{BigDecimal::from_str("0.0").unwrap()}
         };
 
         return Ok(balance);
@@ -649,10 +653,10 @@ impl Wallet {
             receiver_address: address.to_owned(),
             date_created: "".to_string(),
             hash: "".to_string(),
-            amount: 100.0,
+            amount: BigDecimal::from_str("0.0").unwrap(),
             prev_hash:"000000000".to_string(),
             public_key: "".to_string(),
-            balance: 100.0,
+            balance: BigDecimal::from_str("0.0").unwrap(),
             trx_h: Some("jooli".to_string())
         };
 
@@ -759,7 +763,7 @@ impl Wallet {
     }
 
     // gets a users wallet balance
-    pub fn get_balance(address:&String)->Result<f32, Box<dyn Error>>{
+    pub fn get_balance(address:&String)->Result<BigDecimal, Box<dyn Error>>{
         // get the chain
         let chain:Chain = match KvStore::get(address.to_string(), "chain".to_string()){
             Ok(data)=>{data},
@@ -777,9 +781,9 @@ impl Wallet {
             date_created: "".to_string(),
             hash: "".to_string(),
             prev_hash: "".to_string(),
-            amount: 0.0,
+            amount: BigDecimal::from_str("0.0").unwrap(),
             public_key: "".to_string(),
-            balance: 0.0,
+            balance: BigDecimal::from_str("0.0").unwrap(),
             trx_h: Some("jooli".to_string())
         };
         let pos = chain.chain.len() -1;
@@ -788,7 +792,7 @@ impl Wallet {
             None=>{tmp_block}
         };
         let mut b = block;
-        let mut balance:f32 = b.balance.clone();
+        let mut balance:BigDecimal = b.balance.clone();
 
 
         return Ok(balance)

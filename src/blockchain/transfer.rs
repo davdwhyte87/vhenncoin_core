@@ -1,6 +1,8 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
+use std::str::FromStr;
 use base64::Engine;
+use bigdecimal::BigDecimal;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
@@ -173,7 +175,7 @@ impl Transfer {
 
     pub async fn transfer_http(
         sender:String,
-        receiver:String, amount:f32, 
+        receiver:String, amount:BigDecimal, 
         transaction_id:String,
         password: String
     )->Result<(), Box<dyn Error>>{
@@ -306,7 +308,7 @@ impl Transfer {
         return Ok(())
     }
     // transfer value from one wallet to another
-    pub fn transfer(sender:String, receiver:String, amount:f32, transaction_id:String, password: String)->Result<(), Box<dyn Error>>{
+    pub fn transfer(sender:String, receiver:String, amount:BigDecimal, transaction_id:String, password: String)->Result<(), Box<dyn Error>>{
         
         // get sender public key from last block
         // check if both wallets exist
@@ -333,15 +335,15 @@ impl Transfer {
         };
         let sender_balance = match sender_chain.chain.chain.last(){
             Some(data)=>{
-                data.balance
+                data.to_owned().balance
             }, 
-            None=>{0.0}
+            None=>{BigDecimal::from_str("0.0").unwrap()}
         };
         let receiver_balance = match receiver_chain.chain.chain.last(){
             Some(data)=>{
-                data.balance
+                data.to_owned().balance
             }, 
-            None=>{0.0}
+            None=>{BigDecimal::from_str("0.0").unwrap()}
         };
 
         if sender_balance < amount{

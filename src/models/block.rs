@@ -1,5 +1,6 @@
 use std::clone;
 
+use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 
 // this represents a chunck of transaction data in a wallet
@@ -12,9 +13,9 @@ pub struct Block{
     pub date_created:String,
     pub hash:String,
     pub prev_hash:String,
-    pub amount: f32,
+    pub amount: BigDecimal,
     pub public_key: String,
-    pub balance:f32,
+    pub balance:BigDecimal,
     pub trx_h:Option<String>
 }
 

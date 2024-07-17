@@ -1,4 +1,6 @@
-use bigdecimal::ToPrimitive;
+use std::str::FromStr;
+
+use bigdecimal::{BigDecimal, ToPrimitive};
 use itertools::Itertools;
 
 use serde::{Deserialize, Serialize};
@@ -13,7 +15,7 @@ pub struct Concensus{
 
 #[derive(Debug, Clone)]
 pub struct Vote {
-       pub balance:f32,
+       pub balance:BigDecimal,
        pub vote:i32,
        pub http_address:String
    }
@@ -82,7 +84,7 @@ impl Concensus{
         print!("{:#?}", votes);
 
         // select highest vote
-        let mut highest_vote:Vote = Vote{balance:0.0, vote:0,http_address:"".to_string()};
+        let mut highest_vote:Vote = Vote{balance:BigDecimal::from_str("0.0").unwrap(), vote:0,http_address:"".to_string()};
 
         for vote in votes{
             if vote.vote > highest_vote.vote {
@@ -116,7 +118,7 @@ impl Concensus{
         print!("{:#?}", votes);
 
         // select highest vote
-        let mut highest_vote:Vote = Vote{balance:0.0, vote:0,http_address:"".to_string()};
+        let mut highest_vote:Vote = Vote{balance:BigDecimal::from_str("0.0").unwrap(), vote:0,http_address:"".to_string()};
 
         for vote in votes{
             if vote.vote > highest_vote.vote {
@@ -131,7 +133,7 @@ impl Concensus{
     }
     
   
-    fn contains(data:f32, votes:&Vec<Vote>)->bool{
+    fn contains(data:BigDecimal, votes:&Vec<Vote>)->bool{
         for vote in votes{
             if vote.balance == data{
                 return true
@@ -168,11 +170,11 @@ impl Concensus{
 
       
     }
-    fn add_vote(data:f32, votes: &mut Vec<Vote>, address:String){
+    fn add_vote(data:BigDecimal ,votes: &mut Vec<Vote>, address:String){
         // go through votes, if the item has been voted for before, 
         // go through votes and update vote count 
         // if not voted for before, add
-        if Self::contains(data, &votes) {
+        if Self::contains(data.clone(), &votes) {
             for  (i, vote) in votes.iter_mut().enumerate(){
                 if (vote.balance == data){
                    vote.vote = vote.vote +1; 

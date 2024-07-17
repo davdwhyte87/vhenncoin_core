@@ -4,10 +4,11 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::TcpStream;
-use std::str::from_utf8;
+use std::str::{from_utf8, FromStr};
 use std::time::Duration;
 use std::{f32, vec};
 use actix_web::http;
+use bigdecimal::BigDecimal;
 use log::{debug, error};
 use reqwest::header::CONTENT_TYPE;
 use crate::blockchain::wallet;
@@ -693,7 +694,7 @@ pub fn get_remote_wallet(server_data:&ServerData, address:&String)->Result<Walle
         Ok(wallet)
 
 }
-pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Result<f32, Box<dyn Error>>{
+pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Result<BigDecimal, Box<dyn Error>>{
     let request = Struct_H::struct_to_string(&GetBalanceReq{address:address.to_owned()});
     let message = Formatter::request_formatter(
         constants::GET_NODE_BALANCE_ACTION.to_owned(),
@@ -740,11 +741,11 @@ pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Resu
 
     // get message  
     use std::str::FromStr;
-    let balance =  match f32::from_str(data){
+    let balance =  match BigDecimal::from_str(data){
         Ok(data)=>{data},
         Err(err)=>{
             debug!("{}", err.to_string());
-            0.00
+            BigDecimal::from_str("0.0").unwrap()
         }
     };
 
@@ -752,7 +753,7 @@ pub fn get_remote_node_balance_c(server_data:&ServerData, address:&String)->Resu
     Ok(balance)
 }
 
-pub async fn get_node_balance(server_data:&ServerData, address:&String)->Result<f32, Box<dyn Error>>{
+pub async fn get_node_balance(server_data:&ServerData, address:&String)->Result<BigDecimal, Box<dyn Error>>{
         
     let url =format!("{}/send_message", server_data.http_address.to_owned());
     let mut c = awc::Client::default();
@@ -812,11 +813,11 @@ pub async fn get_node_balance(server_data:&ServerData, address:&String)->Result<
         return Err(Box::from("Error from remote server"));
     }
 
-    let balance:f32 = match serde_json::from_str(&response_data){
+    let balance = match BigDecimal::from_str(&response_data){
         Ok(data)=>{data},
             Err(err)=>{
                 error!("error ... {}", err);
-                0.0
+                BigDecimal::from_str("0.0").unwrap()
             }
     };
     // let wallet_data = match wallet_data {

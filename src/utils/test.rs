@@ -1,5 +1,6 @@
-use std::{env::current_dir, fs::File, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, path::Path, vec};
+use std::{env::current_dir, fs::File, io::{BufRead, BufReader, Read, Write}, net::{TcpListener, TcpStream}, path::Path, str::FromStr, vec};
 
+use bigdecimal::BigDecimal;
 use log::debug;
 use redb::{Database, TableDefinition};
 use walkdir::WalkDir;
@@ -165,42 +166,42 @@ pub fn cons(){
     let balance_pack_list = vec![
         BalancePack{
             server_http_address :"s1".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s2".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s3".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },  BalancePack{
             server_http_address :"s4".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s5".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s6".to_string(),
-            balance: 9.0
+            balance: BigDecimal::from_str("9.0").unwrap()
         },
         BalancePack{
             server_http_address :"s7".to_string(),
-            balance: 8.0
+            balance: BigDecimal::from_str("8.0").unwrap()
         },
         BalancePack{
             server_http_address :"s8".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s9".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         },
         BalancePack{
             server_http_address :"s10".to_string(),
-            balance: 10.0
+            balance: BigDecimal::from_str("10.0").unwrap()
         }
     ];
     let m = concensus::Concensus::vote_balance(balance_pack_list);
