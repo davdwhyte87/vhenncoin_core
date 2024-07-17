@@ -55,3 +55,9 @@ pub fn round_number(number:f32)->f32{
     let y = (number * 1000.0).round() / 1000.0;
     return y ;
 }
+
+
+// helps make sure we have ascii characters 
+pub fn is_ascii(s: &str) -> bool {
+    s.chars().all(|c| c.is_ascii())
+}

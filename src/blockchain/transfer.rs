@@ -373,7 +373,7 @@ impl Transfer {
             hash: "".to_string(),
             amount: amount.clone(),
             prev_hash :receiver_chain.chain.chain.last().unwrap().hash.to_owned(),
-            public_key: "".to_string(),
+            public_key: sender_chain.public_key.clone(),
             balance : sender_balance - amount.clone(),
             trx_h: Some("000".to_string())
         };
@@ -391,7 +391,7 @@ impl Transfer {
             date_created: get_date_time(),
             hash:"".to_string(),
             amount: amount.clone(),
-            public_key: "".to_string(),
+            public_key: receiver_chain.public_key.clone(),
             balance : receiver_balance + amount,
             trx_h: Some("000".to_string())
         };

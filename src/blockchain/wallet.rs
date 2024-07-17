@@ -22,7 +22,7 @@ use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey, pkcs1::DecodeRsaPrivateK
 use rsa::pkcs1::{EncodeRsaPrivateKey, EncodeRsaPublicKey, LineEnding};
 use rsa::pkcs8::EncodePrivateKey;
 use rsa::rand_core;
-use rsa::rand_core::SeedableRng;
+// use rsa::rand_core::SeedableRng;
 use serde::__private::de::IdentifierDeserializer;
 use serde::de::IntoDeserializer;
 use sha256::digest;
@@ -39,8 +39,15 @@ use crate::models::db::{DB, MongoService};
 use crate::models::wallet::{LimitPeriod, MongoWallet, WalletC};
 use crate::req_models::wallet_requests::CreateWalletReq;
 use crate::utils::time::get_date_time;
-use crate::utils::utils;
+use crate::utils::{self};
 use redb::{AccessGuard, Database, ReadableTable, TableDefinition};
+
+use k256::ecdsa::{SigningKey, VerifyingKey};
+use k256::elliptic_curve::sec1::ToEncodedPoint;
+use rand_core::SeedableRng;
+use rand_chacha::ChaCha20Rng;
+
+
 pub struct Wallet{
 
 }
@@ -308,6 +315,15 @@ impl Wallet {
         }else{
             return Err(Box::from("Wallet path exists"))
         }
+
+        // generate ECDSA keys 
+        let pair = match self::Wallet::seed_gen_keys(&password){
+            Ok(data)=>{data},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        };
+
         // try creating the database 
         let path = format!("data/{}/wallet.redb", address) ;
         const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
@@ -338,10 +354,10 @@ impl Wallet {
             receiver_address: address.to_owned(),
             date_created: get_date_time(),
             hash: "".to_string(),
-            amount: 100.0,
+            amount: 0.0,
             prev_hash:"000000000".to_string(),
-            public_key: "".to_string(),
-            balance: 100.0,
+            public_key: pair.public_key.clone(),
+            balance: 0.0,
             trx_h: Some("000".to_string())
         };
         
@@ -351,7 +367,7 @@ impl Wallet {
             wallet_name: "".to_string(),
             password_hash: hash ,
             created_at:get_date_time(),
-            public_key: "".to_string(),
+            public_key: pair.public_key,
             is_private: false,
             transaction_limit: false,
             transaction_limit_value: 0.0,
@@ -918,6 +934,48 @@ impl Wallet {
 
         println!("private key {}", general_purpose::URL_SAFE_NO_PAD.encode(pkcs8_bytes.as_ref()));
         println!("public key {}", general_purpose::URL_SAFE_NO_PAD.encode(key_pair.public_key()));
-
     }
+
+
+    // generate ECDSA keys based on a passphrase 
+    pub fn seed_gen_keys(pass: &str)->Result<Pair, Box<dyn Error>>{
+        // check if pass is ascii 
+        if !utils::utils::is_ascii(pass){
+            return Err(Box::from("Passphrase is not ASCII character"));
+        }
+        // check if pass is more then 32 bytes
+        if pass.as_bytes().len() > 32{
+            return Err(Box::from("Passphrase is more than 32 bytes")); 
+        }
+        // move bytes to array of bytes fill zeros in empty spaces
+        let mut seed:[u8; 32] = [0u8; 32]; 
+        let passBytes = pass.as_bytes();
+        let length = if passBytes.len() > 32 {64} else {passBytes.len()};
+        seed[..length].copy_from_slice(&passBytes[..length]);
+
+        // creates randomizer from seed
+        let mut rng = ChaCha20Rng::from_seed(seed);
+    
+        // Generate a signing (private) key
+        let signing_key = SigningKey::random(&mut rng);
+    
+        // Derive the verifying (public) key
+        let verifying_key = VerifyingKey::from(&signing_key);
+        let private_key_bytes = signing_key.to_bytes();
+        let public_key_bytes = verifying_key.to_encoded_point(false).to_bytes();
+
+        let public_key = general_purpose::URL_SAFE_NO_PAD.encode(public_key_bytes);
+        let private_key = general_purpose::URL_SAFE_NO_PAD.encode(private_key_bytes);
+        // Print the keys
+        println!("Private Key: {:?}", private_key);
+        println!("Public Key: {:?}", public_key);
+
+        return Ok(Pair{public_key, private_key})
+    }
+}
+
+
+pub struct Pair{
+     public_key:String, 
+     private_key:String   
 }

@@ -62,10 +62,13 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 fn main() {
     // test_dd();
-//    utils::test::zip();
+   // utils::test::zip();
+//    match Wallet::seed_gen_keys("wet_whitej***"){
+//     Ok(_)=>{},
+//     Err(err)=>{println!("{}", err.to_string())}
+//    }
+
 //    return;
-
-
     env::set_var("RUST_BACKTRACE", "full");
 
 
