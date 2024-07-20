@@ -22,7 +22,7 @@ use crate::models;
 use crate::models::balance_pack::{BalanceCPack, BalancePack, WalletCPack};
 use crate::models::block::{Block, Chain};
 use crate::models::db::MongoService;
-use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, TransferReq};
+use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, GetWalletReq, TransferReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::ServerData;
 use crate::models::wallet::{MongoWallet, WalletC};
@@ -155,7 +155,7 @@ impl Handler {
         };
 
         // check if the wallet exists 
-        if !Wallet::wallet_exists(&request.address){
+        if !Wallet::wallet_exists(&request.address.to_lowercase()){
             debug!("{}","Wallet does not exist");
             let response = Formatter::response_formatter(
                 "0".to_string(),
@@ -372,7 +372,12 @@ impl Handler {
 
         debug!("transaction ID {}", request.transaction_id);
 
-        match Transfer::transfer(request.sender, request.receiver, BigDecimal::from_str(&request.amount).unwrap(), request.transaction_id, request.sender_password){
+        match Transfer::transfer(
+            request.sender.to_lowercase(),
+            request.receiver.to_lowercase(),
+    BigDecimal::from_str(&request.amount).unwrap(),
+            request.transaction_id, request.sender_password
+            ){
             Ok(_)=>{},
             Err(err)=>{
                 if err.to_string() == Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}).to_string(){
@@ -382,7 +387,7 @@ impl Handler {
                 error!("{}", err.to_string());
                 let response = Formatter::response_formatter(
                     "0".to_string(),
-                     "Error sending finds".to_string(), 
+                     "Error sending funds".to_string(), 
                      err.to_string()
                     );
                 TCPResponse::send_response_txt(response, stream);
@@ -544,8 +549,11 @@ impl Handler {
             TCPResponse::send_response_txt(response,  stream);
             return;  
         }
+
+        // make sure address is lower case
+        let tr_address = request.address.trim().to_lowercase();
         debug!("Done decoding message");
-        let resp = match Wallet::create_wallet_r(request.address,request.password){
+        let resp = match Wallet::create_wallet_r(tr_address,request.password){
             Ok(data)=>{
                 let response = Formatter::response_formatter(
                     "1".to_string(),
@@ -1080,8 +1088,23 @@ impl Handler {
     }
 
 
-    pub fn get_single_wallet_c(address:String,  stream: &mut TcpStream){
-        let wallet = Wallet::get_wallet_c(&address);
+    pub fn get_single_wallet_c(message:String,  stream: &mut TcpStream){
+
+        let mut request: GetWalletReq = match  serde_json::from_str(&message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+        let wallet = Wallet::get_wallet_c(&request.address);
         let wallet = match wallet {
             Ok(wallet)=>{wallet},
             Err(err)=>{

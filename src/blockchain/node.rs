@@ -176,6 +176,7 @@ impl Node {
                Handler::get_node_wallet_list_c(&mut stream);
             },
             "GetWalletData"=>{
+                thread::sleep(Duration::from_secs(1));
                 Handler::get_single_wallet_c(message.clone(), &mut stream);
             },
             "GetZipChain"=>{

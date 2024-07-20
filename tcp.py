@@ -8,8 +8,9 @@ s.connect((host, port))
 CREATE_WALLET = b'CreateWallet\n{"address":"david123","password":"12345","wallet_name":"david"}\n0\n0\n0\n'
 TRANSFER = b'Transfer\n{"sender":"hkdoor","receiver":"david123","amount":"50000000000.0","transaction_id":"3738h84hf874","sender_password":"12345"}\n0\n0\n0\n'
 GET_BALANCE = b'GetBalance\n{"address":"david123"}\n0\n0\n0\n'
+GET_WALLET = b'GetWalletData\n{"address":"david123"}\n0\n0\n0\n'
 GET_CHAIN_ZIP = b'GetZipChain\n0\n0\n0\n0\n'
-s.sendall(GET_BALANCE)
+s.sendall(GET_WALLET)
 data = s.recv(4000)
 
 # with open('download.zip','wb') as out:
