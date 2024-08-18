@@ -63,3 +63,6 @@ node sync
 - do consensus on this wallet list to build an actual truthful wallet list
 - for each of the wallets, get last block 
 
+
+- digital ID system users can 
+- digital ID   
