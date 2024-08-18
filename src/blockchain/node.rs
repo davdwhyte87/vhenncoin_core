@@ -2,7 +2,7 @@ use core::num;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
@@ -176,11 +176,17 @@ impl Node {
                Handler::get_node_wallet_list_c(&mut stream);
             },
             "GetWalletData"=>{
-                thread::sleep(Duration::from_secs(1));
+                //thread::sleep(Duration::from_secs(1));
                 Handler::get_single_wallet_c(message.clone(), &mut stream);
             },
             "GetZipChain"=>{
                 Handler::get_chain_zip(&mut stream);
+            },
+            "CreateUserId"=>{
+                Handler::create_user_id(message.clone(), &mut stream)
+            },
+            "ValidateUserId"=>{
+                Handler::validate_user_id(message.clone(), &mut stream)
             }
     
             _ => {}
@@ -658,6 +664,31 @@ impl Node {
     
         zip.finish();
         
+    }
+
+
+
+    // setupp teh folders and files needed for storing digital ID data
+    pub fn setup_digital_id_folders()->Result<(), Box<dyn Error>>{
+        let path_str = format!("id_data/");
+
+        let path = Path::new(path_str.as_str());
+
+        if !path.exists() {
+            match fs::create_dir_all(path){
+                Ok(_)=>{},
+                Err(err)=>{
+                    println!("Error creating path: {}", err.to_string());
+                    return Err(err.into());
+                }
+            };
+            println!("Path created: {}", path.display());
+        } else {
+
+            println!("Path already exists: {}", path.display());
+        }
+
+        return Ok(())
     }
 
 }

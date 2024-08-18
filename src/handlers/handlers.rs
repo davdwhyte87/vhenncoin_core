@@ -10,9 +10,12 @@ use futures_util::future::err;
 use itertools::Format;
 use log::{debug, error, info};
 use log4rs::append::file;
+use sha256::digest;
 use tokio::runtime::Runtime;
+use uuid::Uuid;
 use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_remote_wallet, get_servers, save_server_list};
 use crate::blockchain::concensus::Concensus;
+use crate::blockchain::digital_id::DigitalID;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::node::Node;
@@ -22,9 +25,10 @@ use crate::models;
 use crate::models::balance_pack::{BalanceCPack, BalancePack, WalletCPack};
 use crate::models::block::{Block, Chain};
 use crate::models::db::MongoService;
-use crate::models::request::{AddNodeReq, CreateWalletReq, GetBalanceReq, GetWalletReq, TransferReq};
+use crate::models::request::{AddNodeReq, CreateUserIDReq, CreateWalletReq, GetBalanceReq, GetWalletReq, TransferReq, ValidateUserIDReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::ServerData;
+use crate::models::user_id::UserID;
 use crate::models::wallet::{MongoWallet, WalletC};
 use crate::utils::constants;
 use crate::utils::env::get_env;
@@ -32,7 +36,8 @@ use crate::utils::formatter::Formatter;
 use crate::utils::response::{Response, TCPResponse};
 use crate::utils::struct_h::Struct_H;
 use crate::utils::test::response_formatter;
-use crate::utils::utils::{MyError, MyErrorTypes};
+use crate::utils::time::get_date_time;
+use crate::utils::utils::{validate_user_name, MyError, MyErrorTypes};
 use models::balance_pack;
 
 pub struct Handler{
@@ -132,7 +137,7 @@ impl Handler {
            "1".to_string(),
             "Ok".to_string(), 
             vote_string
-           );
+        );
 
         TCPResponse::send_response_txt(resp_message, stream);
         stream.flush();
@@ -1200,5 +1205,115 @@ impl Handler {
         } 
     }
 
+    pub fn create_user_id(message:String,  stream: &mut TcpStream){
+
+        let mut request: CreateUserIDReq = match  serde_json::from_str(&message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+        if !validate_user_name(&request.user_name) {
+            info!("{} invalid username type", request.user_name.to_owned());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "invalid username type".to_string(), 
+                     "".to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return; 
+        }
+    
+        let data = UserID{
+            id: Uuid::new_v4().to_string(),
+            user_name: request.user_name.to_owned(),
+            password_hash : digest(format!("{}",request.password.to_owned())),
+            date_created:get_date_time(),
+            recovery_answer: "".to_string(),
+            recovery_question: "".to_string()
+        };
+    
+        match DigitalID::create_user(&request.user_name, data){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return; 
+            }
+        }
+        //  return format!("1 {}{}{}{:?}",r"\n","Ok","r\n",wallets_string);
+        let response: String = Formatter::response_formatter(
+            "1".to_string(),
+             "Ok".to_string(), 
+             "".to_string()
+            );
+    
+        TCPResponse::send_response_txt(response, stream);
+        return;
+    }
+
+    pub fn validate_user_id(message:String,  stream: &mut TcpStream){
+
+        let mut request: ValidateUserIDReq = match  serde_json::from_str(&message.as_str()) {
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error persing data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return;
+            }
+        };
+
+
+
+        // get user ID
+        match DigitalID::validate_user(&request.user_name, request.password){
+            Ok(_)=>{
+                let response: String = Formatter::response_formatter(
+                    "1".to_string(),
+                     "Ok".to_string(), 
+                     "".to_string()
+                    );
+            
+                TCPResponse::send_response_txt(response, stream);
+                return;  
+            },
+            Err(err)=>{
+                error!("{}",err.to_string());
+              
+                let response = Formatter::response_formatter(
+                    "0".to_string(),
+                     "Error validating data".to_string(), 
+                     err.to_string()
+                    );
+                TCPResponse::send_response_txt(response, stream);
+                return; 
+            }
+        }
+    
+    }
 }
+
+
 

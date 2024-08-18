@@ -23,6 +23,21 @@ pub struct GetWalletReq {
 }
 
 
+#[derive(Serialize, Deserialize)]
+pub struct CreateUserIDReq{
+    pub user_name: String,
+    pub password:String
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct ValidateUserIDReq{
+    pub user_name: String,
+    pub password:String
+}
+
+
+
 
 
 #[derive(Serialize, Deserialize)]

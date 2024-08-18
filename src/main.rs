@@ -87,6 +87,14 @@ fn main() {
         return ;
     }
 
+    match Node::setup_digital_id_folders(){
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("error setting up id folders{}", err.to_string());
+            panic!()
+        }
+    }
+
     match Node::discover_c() {
         Ok(_)=>{},
         Err(err)=>{

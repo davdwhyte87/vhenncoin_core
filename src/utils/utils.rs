@@ -61,3 +61,18 @@ pub fn round_number(number:f32)->f32{
 pub fn is_ascii(s: &str) -> bool {
     s.chars().all(|c| c.is_ascii())
 }
+
+pub fn validate_user_name(user_name:&str)->bool{
+            // check if there is white space in the wallet address
+            if user_name.contains(char::is_whitespace){
+
+                return false;  
+            }
+            // make sure address is lower case
+            if user_name.chars().all(|c|  !c.is_alphabetic() || c.is_lowercase()) {
+                return true
+            }else{
+                return false
+            }
+
+}

@@ -10,7 +10,11 @@ TRANSFER = b'Transfer\n{"sender":"hkdoor","receiver":"david123","amount":"500000
 GET_BALANCE = b'GetBalance\n{"address":"david123"}\n0\n0\n0\n'
 GET_WALLET = b'GetWalletData\n{"address":"david123"}\n0\n0\n0\n'
 GET_CHAIN_ZIP = b'GetZipChain\n0\n0\n0\n0\n'
-s.sendall(GET_WALLET)
+
+CREATE_USER_ID = b'CreateUserId\n{"user_name":"nubule#$erro","password":"12345"}\n0\n0\n0\n'
+VALIDATE_USER_ID = b'ValidateUserId\n{"user_name":"david123","password":"12345"}\n0\n0\n0\n'
+
+s.sendall(CREATE_USER_ID)
 data = s.recv(4000)
 
 # with open('download.zip','wb') as out:
