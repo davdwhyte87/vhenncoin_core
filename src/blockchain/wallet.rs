@@ -32,14 +32,16 @@ use sha256::digest;
 use uuid::{Uuid, uuid};
 use uuid::Version::Sha1;
 use validator::HasLen;
+use crate::blockchain::digital_id::DigitalID;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::models::block;
 
 use crate::models::block::{Block, Chain};
 use crate::models::db::{DB, MongoService};
+use crate::models::request::CreateWalletReq;
 use crate::models::wallet::{LimitPeriod, MongoWallet, WalletC};
-use crate::req_models::wallet_requests::CreateWalletReq;
+
 use crate::utils::time::get_date_time;
 use crate::utils::{self};
 use redb::{AccessGuard, Database, ReadableTable, TableDefinition};
@@ -304,8 +306,8 @@ impl Wallet {
 
 
     // create wallet with rocks db kv store
-    pub fn create_wallet_r(address:String, password:String)->Result<(), Box<dyn Error>>{
-        let d_path = format!("data/{}", address) ;
+    pub fn create_wallet_r(req:CreateWalletReq)->Result<(), Box<dyn Error>>{
+        let d_path = format!("data/{}", req.address) ;
         if !Path::new(d_path.as_str()).exists() {
             let folder = fs::create_dir_all(d_path.as_str());
             match folder {
@@ -321,7 +323,7 @@ impl Wallet {
         }
 
         // generate ECDSA keys 
-        let pair = match self::Wallet::seed_gen_keys(&password){
+        let pair = match self::Wallet::seed_gen_keys(&req.password){
             Ok(data)=>{data},
             Err(err)=>{
                 return Err(err.into())
@@ -329,9 +331,15 @@ impl Wallet {
         };
 
         // try creating the database 
-        let path = format!("data/{}/wallet.redb", address) ;
+        let path = format!("data/{}/wallet.redb", req.address) ;
         const TABLE: TableDefinition<&str, String> = TableDefinition::new("my_data");
-        let db =match  Database::create(path){
+      
+
+        let mut hasher = Sha256::new();
+
+
+        // get digital id
+        let digitalId = match DigitalID::get_user(&req.vcid_username){
             Ok(data)=>{data},
             Err(err)=>{
                 error!("error {}", err.to_string());
@@ -339,15 +347,27 @@ impl Wallet {
             }
         };
 
-        let mut hasher = Sha256::new();
-
+        let mut hash = "".to_string();
         // write input message
-        hasher.update(password);
+        if !req.is_vcid{
+            hasher.update(req.password);
+               // read hash digest and consume hasher
+            let result = hasher.finalize();
 
-        // read hash digest and consume hasher
-        let result = hasher.finalize();
+            hash = format!("{:X}", result);
+        }else{
+            // validate digital id
+            // match DigitalID::validate_user(&req.vcid_username, req.password){
+            //     Ok(())=>{},
+            //     Err(err)=>{
+            //         error!("error {}", err.to_string());
+            //         return Err(err.into())
+            //     }
+            // }
 
-        let hash = format!("{:X}", result);
+            // use the gidital id hash 
+            // hash = digitalId.password_hash
+        }
 
         let transaction_id = digest(format!("{}", Uuid::new_v4().to_string()));
 
@@ -355,7 +375,7 @@ impl Wallet {
             id: Uuid::new_v4().to_string(),
             transaction_id: transaction_id,
             sender_address: "000000000".to_string(),
-            receiver_address: address.to_owned(),
+            receiver_address: req.address.to_owned(),
             date_created: get_date_time(),
             hash: "".to_string(),
             amount: BigDecimal::from_str("0.0").unwrap(),
@@ -367,7 +387,7 @@ impl Wallet {
         
         let mut wallet = WalletC{
             id: Uuid::new_v4().to_string(),
-            address: address.to_owned(),
+            address: req.address.to_owned(),
             wallet_name: "".to_string(),
             password_hash: hash ,
             created_at:get_date_time(),
@@ -379,6 +399,8 @@ impl Wallet {
             is_vault: false,
             release_date: "".to_string(),
             chain: Chain { chain: vec![] },
+            is_vcid_id: Some(req.is_vcid), 
+            vcid_id_user_name:Some(req.vcid_username)
         };
    
 
@@ -395,6 +417,16 @@ impl Wallet {
             Err(r)=>{
                 error!("error encoding wallet {}",r.to_string());
                 return Err(r.into())
+            }
+        };
+
+
+        // create db
+        let db =match  Database::create(path){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error creating db {}", err.to_string());
+                return Err(err.into())
             }
         };
 

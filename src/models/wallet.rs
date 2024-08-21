@@ -57,7 +57,9 @@ pub struct WalletC {
     pub limit_period: LimitPeriod,
     pub is_vault: bool,
     pub release_date: String,
-    pub chain:Chain
+    pub chain:Chain,
+    pub is_vcid_id:Option<bool>,    // is the wallet using vhenncoin id for authentication
+    pub vcid_id_user_name:Option<String> 
 }
 
 impl WalletC {
@@ -77,6 +79,8 @@ impl WalletC {
             is_vault: false,
             release_date:  "".to_string(),
             chain:Chain { chain: vec![] },
+            is_vcid_id : Some(false),
+            vcid_id_user_name : Some("".to_string())
         };
     }
 }

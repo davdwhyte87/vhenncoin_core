@@ -34,7 +34,7 @@ impl DigitalID {
         let userID = match KVService::get_data::<UserID>(&path, "user_data", user_name){
             Ok(data)=>{data},
             Err(err)=>{
-                error!(" error saving data on disk {}", err.to_string());
+                error!(" error getting user data {}", err.to_string());
                 return Err(err.into())
             }
         };
@@ -46,6 +46,21 @@ impl DigitalID {
         }
     
         return  Ok(());
+    }
+
+
+    pub fn get_user(user_name:&str)->Result<UserID, Box<dyn Error>>{
+        let path = format!("id_data/user_data.redb");
+        let userID = match KVService::get_data::<UserID>(&path, "user_data", user_name){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!(" error saving data on disk {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+    
+    
+        return  Ok(userID);
     }
       
 }

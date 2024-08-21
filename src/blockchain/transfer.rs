@@ -30,6 +30,8 @@ use crate::blockchain::mongo_store::WalletService;
 use crate::models::db::MongoService;
 use crate::models::request::TransferReq;
 
+use super::digital_id::DigitalID;
+
 
 pub struct Transfer {
 
@@ -355,13 +357,27 @@ impl Transfer {
         let mut hasher = Sha256::new();
 
         // write input message
-        hasher.update(password);
+        hasher.update(password.to_owned());
 
         // read hash digest and consume hasher
         let result = hasher.finalize();
         let hash = format!("{:X}", result);
-        if sender_chain.password_hash != hash{
-            return  Err(Box::from("Unauthorized to make transfer"))
+
+
+        // if wallet is using vcid auth
+        if sender_chain.is_vcid_id.unwrap_or_default(){
+               // validate digital id
+               match DigitalID::validate_user(&sender_chain.vcid_id_user_name.unwrap_or_default(), password.to_owned()){
+                Ok(())=>{},
+                Err(err)=>{
+                    error!("error {}", err.to_string());
+                    return Err(err.into())
+                }
+            }
+        }else{
+            if sender_chain.password_hash != hash{
+                return  Err(Box::from("Unauthorized to make transfer"))
+            } 
         }
 
         // create minus block

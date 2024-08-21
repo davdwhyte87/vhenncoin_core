@@ -556,9 +556,9 @@ impl Handler {
         }
 
         // make sure address is lower case
-        let tr_address = request.address.trim().to_lowercase();
+        //let tr_address = request.address.trim().to_lowercase();
         debug!("Done decoding message");
-        let resp = match Wallet::create_wallet_r(tr_address,request.password){
+        let resp = match Wallet::create_wallet_r(request){
             Ok(data)=>{
                 let response = Formatter::response_formatter(
                     "1".to_string(),
@@ -1240,7 +1240,8 @@ impl Handler {
             password_hash : digest(format!("{}",request.password.to_owned())),
             date_created:get_date_time(),
             recovery_answer: "".to_string(),
-            recovery_question: "".to_string()
+            recovery_question: "".to_string(),
+            is_image_verification_linked: false
         };
     
         match DigitalID::create_user(&request.user_name, data){

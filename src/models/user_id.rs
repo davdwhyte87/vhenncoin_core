@@ -8,5 +8,6 @@ pub struct UserID {
     pub password_hash:String, 
     pub date_created:String,
     pub recovery_answer:String,
-    pub recovery_question:String
+    pub recovery_question:String,
+    pub is_image_verification_linked:bool
 }

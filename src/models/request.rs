@@ -44,7 +44,9 @@ pub struct ValidateUserIDReq{
 pub struct CreateWalletReq {
     pub address: String,
     pub password: String,
-    pub wallet_name:String
+    pub wallet_name:String,
+    pub vcid_username:String,
+    pub is_vcid:bool
 }
 
 
