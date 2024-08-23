@@ -6,7 +6,7 @@ port = 100
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((host, port))
 CREATE_WALLET = b'CreateWallet\n{"address":"pamela808","password":"","wallet_name":"", "vcid_username":"pamela808#", "is_vcid":true}\n0\n0\n0\n'
-TRANSFER = b'Transfer\n{"sender":"pamela808","receiver":"temi9","amount":"100.0","transaction_id":"83u8jisiuduhsih8jbbyy","sender_password":"12345"}\n0\n0\n0\n'
+TRANSFER = b'Transfer\n{"sender":"david123","receiver":"amara101_sigil","amount":"400000.0","transaction_id":"uiw983infH__jsknfskjs","sender_password":"12345"}\n0\n0\n0\n'
 GET_BALANCE = b'GetBalance\n{"address":"danny_f"}\n0\n0\n0\n'
 GET_WALLET = b'GetWalletData\n{"address":"david123"}\n0\n0\n0\n'
 GET_CHAIN_ZIP = b'GetZipChain\n0\n0\n0\n0\n'

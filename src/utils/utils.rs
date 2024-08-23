@@ -69,10 +69,11 @@ pub fn validate_user_name(user_name:&str)->bool{
                 return false;  
             }
             // make sure address is lower case
-            if user_name.chars().all(|c|  !c.is_alphabetic() || c.is_lowercase()) {
-                return true
-            }else{
-                return false
-            }
+            // if user_name.chars().all(|c|  !c.is_alphabetic() || c.is_lowercase()) {
+            //     return true
+            // }else{
+            //     return false
+            // }
 
+            return true;
 }
