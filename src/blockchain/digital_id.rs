@@ -16,9 +16,20 @@ pub struct  DigitalID{
 impl DigitalID {
     pub fn create_user(user_name:&str, user_id:UserID)->Result<(), Box<dyn Error>>{
         let path = format!("id_data/user_data.redb");
-    
         let data_string = utils::struct_h::Struct_H::struct_to_string::<UserID>(&user_id);
-    
+
+        let userID = match KVService::get_data::<UserID>(&path, "user_data", user_name){
+            Ok(data)=>{data},
+            Err(err)=>{
+               UserID::default()
+            }
+        };
+        if !userID.id.is_empty(){
+            return Err(Box::from("Wallet already exists"));
+        }
+
+
+
         match KVService::save(path, "user_data", user_name.to_owned(), data_string){
             Ok(_)=>{},
             Err(err)=>{

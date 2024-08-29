@@ -14,6 +14,7 @@ use bigdecimal::ToPrimitive;
 use chrono::format::StrftimeItems;
 use futures::executor::block_on;
 use futures::{FutureExt, TryFutureExt};
+use get_if_addrs::get_if_addrs;
 use lettre::transport::smtp::commands::Data;
 use log::{debug, error, info};
 use log4rs::Handle;
@@ -70,6 +71,7 @@ impl Node {
 
 
     pub fn serve(){
+        
         let port = match env::var("PORT"){
             Ok(data)=>{data},
             Err(err)=>{
@@ -77,11 +79,34 @@ impl Node {
                 "8000".to_string()
             }
         };
-        let address =format!("{}{}","127.0.0.1:", port);
-        let listener = TcpListener::bind(address.to_owned()).unwrap();
+
+        let ifaces = get_if_addrs().expect("Failed to get network interfaces");
+
+        // Filter for the first non-loopback IPv4 address
+        let ip_address = ifaces.iter()
+            .filter(|iface| iface.ip().is_ipv4() && !iface.is_loopback())
+            .map(|iface| iface.ip())
+            .next()
+            .expect("No valid IPv4 address found");
+       
+        let address =format!("{}:{}",ip_address, port);
+        let listener = match TcpListener::bind(address.to_owned()){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("tcp bind error {}", err.to_string());
+                return;  
+            }
+        };
+        info!("{} {}", "Hello ", port);
         info!("Server running {}", address);
         for stream in listener.incoming() {
-            let mut stream = stream.unwrap();
+            let mut stream = match stream{
+                Ok(data)=>{data},
+                Err(err)=>{
+                    debug!("tcp stream error {}", err.to_string());
+                    return;
+                }
+            };
 
              Node::handle_connection(stream);
         }

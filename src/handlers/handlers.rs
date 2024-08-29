@@ -1251,7 +1251,7 @@ impl Handler {
               
                 let response = Formatter::response_formatter(
                     "0".to_string(),
-                     "Error persing data".to_string(), 
+                     "Error creating digital ID".to_string(), 
                      err.to_string()
                     );
                 TCPResponse::send_response_txt(response, stream);

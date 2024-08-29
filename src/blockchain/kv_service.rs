@@ -1,7 +1,7 @@
 use std::{clone, error::Error, path::Path};
 
 use futures::future::ok;
-use log::error;
+use log::{debug, error};
 use redb::{Database, TableDefinition};
 use serde::{de::{self, DeserializeOwned}, Deserialize};
 
@@ -105,7 +105,11 @@ impl KVService {
             Ok(data)=>{
                 match data {
                     Some(data)=>{data.value().to_owned()},
-                    None=>{return Err(Box::from("No data"))}
+                   
+                    None=>{
+                        debug!("{}", "NO WALLET FOUND");
+                        return Err(Box::from("No data"))
+                    }
                 }
                 },
             Err(err)=>{

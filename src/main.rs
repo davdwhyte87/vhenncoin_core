@@ -71,13 +71,7 @@ fn main() {
 //    return;
     env::set_var("RUST_BACKTRACE", "full");
 
-
-    let stdout = ConsoleAppender::builder().build();
-    let config = Config::builder()
-        .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
-        .unwrap();
-    let _handle = log4rs::init_config(config).unwrap();
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     info!("Starting server..");
 
     dotenv::dotenv().ok();
@@ -91,22 +85,23 @@ fn main() {
         Ok(_)=>{},
         Err(err)=>{
             error!("error setting up id folders{}", err.to_string());
-            panic!()
+            //panic!()
+            return;
         }
     }
 
-    match Node::discover_c() {
-        Ok(_)=>{},
-        Err(err)=>{
-            debug!("{}", err.to_string());
-        }
-    }
-    match Node::notifiy_network_new_node(){
-        Ok(_)=>{}, 
-        Err(err)=>{
-            debug!("{}", err.to_string()); 
-        }
-    }
+    // match Node::discover_c() {
+    //     Ok(_)=>{},
+    //     Err(err)=>{
+    //         debug!("{}", err.to_string());
+    //     }
+    // }
+    // match Node::notifiy_network_new_node(){
+    //     Ok(_)=>{}, 
+    //     Err(err)=>{
+    //         debug!("{}", err.to_string()); 
+    //     }
+    // }
     Node::serve();
 
 }

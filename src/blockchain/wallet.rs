@@ -66,7 +66,7 @@ impl Wallet {
         if address.contains(char::is_whitespace){
             return false;
         }
-        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),r"\data\" ,address.to_owned());
+        let data_path = format!("{}{}{}",current_dir().unwrap_or_default().to_str().unwrap_or_default(),r"/data/" ,address.to_owned());
         println!("{}", data_path);
         if !Path::new(data_path.as_str()).exists() {
             return false
@@ -620,21 +620,21 @@ impl Wallet {
         let db = match Database::open(path){
             Ok(data)=>{data},
             Err(err)=>{
-                error!("{}", err.to_string());
+                error!("open redb - {}", err.to_string());
                 return  Err(err.into());
             }
         };
         let read_txn = match  db.begin_read(){
             Ok(data)=>{data},
             Err(err)=>{
-                error!("error {}", err.to_string());
+                error!("begin read error {}", err.to_string());
                 return Err(err.into())
             } 
         };
         let table = match read_txn.open_table(TABLE){
             Ok(data)=>{data},
             Err(err)=>{
-                error!("error {}", err.to_string());
+                error!("open table error {}", err.to_string());
                 return Err(err.into())
             }
         };
@@ -646,7 +646,7 @@ impl Wallet {
                 }
                 },
             Err(err)=>{
-                error!("error {}", err.to_string());
+                error!("get table error {}", err.to_string());
                 return Err(err.into())
             }  
         };
@@ -656,7 +656,7 @@ impl Wallet {
         let wallet = match serde_json::from_str::<WalletC>(&res_data.value()){
             Ok(data)=>{data},
             Err(err)=>{
-                error!("{}", err.to_string());
+                error!("serde string to wallet errror {}", err.to_string());
                 return Err(err.into());
             }
         };
