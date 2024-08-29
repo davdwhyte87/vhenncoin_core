@@ -111,3 +111,6 @@
 2024-08-29 11:20:30 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
 2024-08-29 11:20:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
 2024-08-29 11:20:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-08-29 12:31:29 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 12:31:29 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-08-29 12:31:29 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
