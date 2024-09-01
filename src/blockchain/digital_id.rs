@@ -13,7 +13,15 @@ pub struct  DigitalID{
 
 }
 
+#[derive(strum_macros::Display, Debug)]
+pub enum WalletCreationError {
+    WalletExists
+}
+impl Error for WalletCreationError {
+    
+}
 impl DigitalID {
+
     pub fn create_user(user_name:&str, user_id:UserID)->Result<(), Box<dyn Error>>{
         let path = format!("id_data/user_data.redb");
         let data_string = utils::struct_h::Struct_H::struct_to_string::<UserID>(&user_id);
@@ -25,7 +33,8 @@ impl DigitalID {
             }
         };
         if !userID.id.is_empty(){
-            return Err(Box::from("Wallet already exists"));
+            // instead of returning error we want to return ok
+            return Err(Box::from(WalletCreationError::WalletExists));
         }
 
 

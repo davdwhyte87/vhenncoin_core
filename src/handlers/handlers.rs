@@ -15,7 +15,7 @@ use tokio::runtime::Runtime;
 use uuid::Uuid;
 use crate::blockchain::broadcast::{broadcast_request_http, broadcast_request_tcp, get_node_balance, get_remote_node_balance_c, get_remote_wallet, get_servers, save_server_list};
 use crate::blockchain::concensus::Concensus;
-use crate::blockchain::digital_id::DigitalID;
+use crate::blockchain::digital_id::{DigitalID, WalletCreationError};
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::node::Node;
@@ -1248,7 +1248,19 @@ impl Handler {
             Ok(_)=>{},
             Err(err)=>{
                 error!("{}",err.to_string());
-              
+                if let Some(wallet_error)= err.downcast_ref::<WalletCreationError>(){
+                    match wallet_error {
+                        WalletCreationError::WalletExists=>{
+                            let response = Formatter::response_formatter(
+                                "1".to_string(),
+                                 "Wallet already exists".to_string(), 
+                                 err.to_string()
+                                );
+                            TCPResponse::send_response_txt(response, stream); 
+                            return;
+                        }
+                    }
+                }
                 let response = Formatter::response_formatter(
                     "0".to_string(),
                      "Error creating digital ID".to_string(), 
