@@ -16,13 +16,13 @@ use serde::de::DeserializeOwned;
 use crate::models::block::{Block, Chain};
 
 
-pub struct KvStore {
+pub struct KvStoreo {
     db_address:String,
     db_name:String,
 
 }
 
-impl KvStore {
+impl KvStoreo {
 
 
 
