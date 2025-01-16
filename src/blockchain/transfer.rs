@@ -1,15 +1,21 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
+use std::str::FromStr;
 use base64::Engine;
+use bigdecimal::BigDecimal;
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::Block;
 use crate::utils::time::get_date_time;
+use crate::utils::utils::{MyError, MyErrorTypes};
 use base64::engine::general_purpose;
 use futures_util::AsyncReadExt;
 use jsonwebtoken::crypto::sign;
+use log::{debug, error};
 use mongodb::options::AuthMechanism::ScramSha256;
+use mongodb::results::UpdateResult;
 use ring::agreement::{Algorithm, UnparsedPublicKey};
 use ring::error::Unspecified;
 use ring::rand::SystemRandom;
@@ -19,7 +25,12 @@ use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey, pkcs1::DecodeRsaPrivateK
 use rsa::pkcs8::spki::Error::AlgorithmParametersMissing;
 use rsa::traits::SignatureScheme;
 use sha256::digest;
+use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
+use crate::models::db::MongoService;
 use crate::models::request::TransferReq;
+
+use super::digital_id::DigitalID;
 
 
 pub struct Transfer {
@@ -163,78 +174,267 @@ impl Transfer {
         
         
     }
+
+    pub async fn transfer_http(
+        sender:String,
+        receiver:String, amount:BigDecimal, 
+        transaction_id:String,
+        password: String
+    )->Result<(), Box<dyn Error>>{
+        let database = match MongoService::get_db(){
+            Some(database)=>{database.db.to_owned()},
+            None=>{return Err(Box::from("No database connection"))}
+        };
+
+
+
+        // check if sender and receiver exist
+
+        let mut sender_wallet =match WalletService::get_by_address(&database, sender.to_owned()).await{
+            Ok(sender_wallet)=>{
+               match sender_wallet {
+                   Some(sender_wallet) => { sender_wallet },
+                   None => {return  Err(Box::from("Wallet not found"))}
+               }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if receiver wallet exists
+        let mut receiver_wallet =match WalletService::get_by_address(&database, receiver.to_owned()).await{
+            Ok(receiver_wallet)=>{
+                match receiver_wallet {
+                    Some(receiver_wallet) => { receiver_wallet },
+                    None => {return  Err(Box::from("Wallet not found"))}
+                }
+            },
+            Err(err)=>{return Err(err.into())}
+        };
+
+        // check if sender has the correct amount
+        let sender_chain = match sender_wallet.chain.chain.last(){
+            Some(sender_chain)=>{sender_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+        if sender_chain.balance < amount{
+            error!("{}","insufficient funds");
+            return  Err(Box::from("Insufficient funds"))
+        }
+
+        // check if the transaction has occured before
+        for block in &sender_wallet.chain.chain{
+            if (block.transaction_id==transaction_id){
+                return  Err(Box::from("Transaction has been processed"))
+            }
+        }
+        for block in &receiver_wallet.chain.chain{
+            if (block.transaction_id==transaction_id){
+                return  Err(Box::from("Transaction has been processed"))
+            }
+        }
+
+
+        // check if sender has the right access
+        let mut hasher = Sha256::new();
+
+        // write input message
+        hasher.update(password);
+
+        // read hash digest and consume hasher
+        let result = hasher.finalize();
+        let hash = format!("{:X}", result);
+        if (sender_wallet.password_hash != hash){
+            return  Err(Box::from("Unauthorized to make transfer"))
+        }
+
+
+        let receiver_chain = match receiver_wallet.chain.chain.last(){
+            Some(receiver_chain)=>{receiver_chain},
+            None=>{
+                return  Err(Box::from("Problem with chain"))
+            }
+        };
+
+        // create new blocks
+        let sender_block = Block{
+            id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id.clone(),
+            sender_address: sender.to_owned(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "sender_h".parse().unwrap(),
+            amount: amount.clone(),
+            prev_hash :"".to_string(),
+            public_key: sender_wallet.public_key.to_owned(),
+            balance : sender_chain.balance.to_owned() - amount.clone(),
+            trx_h: Some("jooli".to_string())
+        };
+        // create add block for receiver
+        let receiver_block = Block{
+            id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id,
+            sender_address: sender.to_owned(),
+            prev_hash :"".to_string(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash: "receiver_h".parse().unwrap(),
+            amount: amount.clone(),
+            public_key: receiver_wallet.public_key.to_owned(),
+            balance : receiver_chain.balance.to_owned() + amount,
+            trx_h: Some("jooli".to_string()),
+        };
+
+        // add new blocks to chain
+        sender_wallet.chain.chain.push(sender_block);
+        receiver_wallet.chain.chain.push(receiver_block);
+
+        // save new wallet data
+        let sup_res = WalletService::update(&database, sender, &sender_wallet).await;
+        let rup_res =  WalletService::update(&database, receiver, &receiver_wallet).await;
+
+        match sup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+
+        match  rup_res {
+            Ok(_)=>{},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
+        return Ok(())
+    }
     // transfer value from one wallet to another
-    pub fn transfer(sender:String, receiver:String, amount:f32)->Result<(), Box<dyn Error>>{
+    pub fn transfer(sender:String, receiver:String, amount:BigDecimal, transaction_id:String, password: String)->Result<(), Box<dyn Error>>{
         
         // get sender public key from last block
         // check if both wallets exist
         let sender_exists = Wallet::wallet_exists(&sender);
         let receiver_exists = Wallet::wallet_exists(&receiver);
         if sender_exists!= true || receiver_exists !=true {
-            return Err(Box::from("Wallet does not exist"))
+            return Err(Box::new(MyError{error:MyErrorTypes::TransferWalletNotFound}))
         }
         //check if sender has the money available
-        let sender_chain = match Wallet::get_wallet_chain(&sender){
+        let mut sender_chain = match Wallet::get_wallet_c(&sender){
             Ok(sender_chian)=>{sender_chian},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!(" error getting chain {}",err.to_string());
+                return Err(err.into())
+            }
+
         };
-        let receiver_chain = match Wallet::get_wallet_chain(&receiver){
+        let mut receiver_chain = match Wallet::get_wallet_c(&receiver){
             Ok(receiver_chain)=>{receiver_chain},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error getting chain {}",err.to_string());
+                return Err(err.into())
+            }
         };
-        let sender_balance = match Wallet::get_balance(&sender){
-            Ok(sender_balance)=>{sender_balance},
-            Err(err)=> {return Err(err.into())}
+        let sender_balance = match sender_chain.chain.chain.last(){
+            Some(data)=>{
+                data.to_owned().balance
+            }, 
+            None=>{BigDecimal::from_str("0.0").unwrap()}
+        };
+        let receiver_balance = match receiver_chain.chain.chain.last(){
+            Some(data)=>{
+                data.to_owned().balance
+            }, 
+            None=>{BigDecimal::from_str("0.0").unwrap()}
         };
 
         if sender_balance < amount{
             return Err(Box::from("Insufficient funds"))
         }
+
+        // check for password
+
+        let mut hasher = Sha256::new();
+
+        // write input message
+        hasher.update(password.to_owned());
+
+        // read hash digest and consume hasher
+        let result = hasher.finalize();
+        let hash = format!("{:X}", result);
+
+
+        // if wallet is using vcid auth
+        if sender_chain.is_vcid_id.unwrap_or_default(){
+               // validate digital id
+               match DigitalID::validate_user(&sender_chain.vcid_id_user_name.unwrap_or_default(), password.to_owned()){
+                Ok(())=>{},
+                Err(err)=>{
+                    error!("error {}", err.to_string());
+                    return Err(err.into())
+                }
+            }
+        }else{
+            if sender_chain.password_hash != hash{
+                return  Err(Box::from("Unauthorized to make transfer"))
+            } 
+        }
+
         // create minus block
-        let sender_h = serde_json::to_string(&sender_chain.borrow().chain.last().unwrap());
-        let sender_h =match sender_h {
-            Ok(json)=>{json},
-            Err(err)=>{
-                return Err(err.into())
-            }
-        };
-        let receiver_h = serde_json::to_string(&receiver_chain.borrow().chain.last().unwrap());
-        let receiver_h =match receiver_h {
-            Ok(json)=>{json},
-            Err(err)=>{
-                return Err(err.into())
-            }
-        };
-        let sender_block = Block{
+
+        let mut sender_block = Block{
             id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id.to_string(),
             sender_address: sender.to_owned(),
             receiver_address: receiver.to_owned(),
             date_created: get_date_time(),
-            hash:sender_h,
-            amount: -amount.clone(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone()
-        };
-        // create add block for receiver
-        let receiver_block = Block{
-            id: Uuid::new_v4().to_string(),
-            sender_address: sender.to_owned(),
-            receiver_address: receiver.to_owned(),
-            date_created: get_date_time(),
-            hash:receiver_h,
+            hash: "".to_string(),
             amount: amount.clone(),
-            public_key: sender_chain.chain.last().unwrap().public_key.clone()
+            prev_hash :receiver_chain.chain.chain.last().unwrap().hash.to_owned(),
+            public_key: sender_chain.public_key.clone(),
+            balance : sender_balance - amount.clone(),
+            trx_h: Some("000".to_string())
         };
+        let sender_b_hash = digest(format!("{}{}{}{}{}",&sender_block.id, &sender_block.sender_address,
+        &sender_block.receiver_address,&sender_block.amount, &sender_block.prev_hash ));
+        sender_block.hash = sender_b_hash;
+
+        // create add block for receiver
+        let mut receiver_block = Block{
+            id: Uuid::new_v4().to_string(),
+            transaction_id: transaction_id.to_owned(),
+            sender_address: sender.to_owned(),
+            prev_hash :receiver_chain.chain.chain.last().unwrap().hash.to_owned(),
+            receiver_address: receiver.to_owned(),
+            date_created: get_date_time(),
+            hash:"".to_string(),
+            amount: amount.clone(),
+            public_key: receiver_chain.public_key.clone(),
+            balance : receiver_balance + amount,
+            trx_h: Some("000".to_string())
+        };
+        let receiver_b_hash = digest(format!("{}{}{}{}{}",receiver_block.id, receiver_block.sender_address,
+        receiver_block.receiver_address,receiver_block.amount, receiver_block.prev_hash ));
+        receiver_block.hash = receiver_b_hash;
+
+        // sender_chain.chain.chain.push(sender_block);
+        // receiver_chain.chain.chain.push(receiver_block);
         // if two blocks are saved well, send response
-        match Wallet::save_block(&sender, sender_block){
+        match Wallet::save_block_c(sender_block, &sender){
             Ok(_)=>{},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error saving {}",err.to_string());
+                return Err(err.into())
+            }
         }
 
-        match Wallet::save_block(&receiver, receiver_block){
+        match Wallet::save_block_c(receiver_block, &receiver){
             Ok(_)=>{},
-            Err(err)=>{return Err(err.into())}
+            Err(err)=>{
+                error!("error saving {}",err.to_string());
+                return Err(err.into())
+            }
         }
-
 
         return Ok(())
     }

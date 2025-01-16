@@ -1,0 +1,311 @@
+2024-08-28 09:58:21 [Vhenn_coin] INFO Vhenn_coin::src\main.rs:75 - Starting server..
+2024-08-28 09:58:21 [Vhenn_coin::blockchain::node] INFO Vhenn_coin::blockchain::node::src\blockchain\node.rs:215 - Starting node discovery
+2024-08-28 09:58:23 [Vhenn_coin::blockchain::broadcast] ERROR Vhenn_coin::blockchain::broadcast::src\blockchain\broadcast.rs:142 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:23 [Vhenn_coin::blockchain::node] ERROR Vhenn_coin::blockchain::node::src\blockchain\node.rs:235 - No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:25 [Vhenn_coin::blockchain::broadcast] ERROR Vhenn_coin::blockchain::broadcast::src\blockchain\broadcast.rs:362 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:27 [Vhenn_coin::blockchain::broadcast] ERROR Vhenn_coin::blockchain::broadcast::src\blockchain\broadcast.rs:362 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:29 [Vhenn_coin::blockchain::broadcast] ERROR Vhenn_coin::blockchain::broadcast::src\blockchain\broadcast.rs:362 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:31 [Vhenn_coin::blockchain::broadcast] ERROR Vhenn_coin::blockchain::broadcast::src\blockchain\broadcast.rs:362 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2024-08-28 09:58:31 [Vhenn_coin::blockchain::node] INFO Vhenn_coin::blockchain::node::src\blockchain\node.rs:82 - Server running 127.0.0.1:100
+2024-08-29 00:26:07 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:215 - Starting node discovery
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:142 - error parsing data Connection refused (os error 111)
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:235 - Connection refused (os error 111)
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:26:07 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:215 - Starting node discovery
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:142 - error parsing data Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:235 - Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:32:25 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:215 - Starting node discovery
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:142 - error parsing data Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:235 - Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:40:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:41:54 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 00:41:54 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:41:54 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:41:54 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:41:54 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:227 - Starting node discovery
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:142 - error parsing data Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:247 - Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 00:57:57 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:362 - error parsing data Connection refused (os error 111)
+2024-08-29 01:01:57 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:05:32 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:05:32 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:73 - Hello
+2024-08-29 01:07:26 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:07:26 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:73 - Hello
+2024-08-29 01:09:04 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:09:04 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:09:51 [vhenncoin] INFO vhenncoin::src/main.rs:75 - Starting server..
+2024-08-29 01:09:51 [vhenncoin::blockchain::node] INFO vhenncoin::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:12:32 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:12:32 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:21:36 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:21:36 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:21:58 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:21:58 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:22:10 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:22:10 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:22:45 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:22:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello
+2024-08-29 01:30:03 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:30:03 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:81 - Hello  1000
+2024-08-29 01:30:37 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:31:34 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:31:34 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:86 - tcp bind error Permission denied (os error 13)
+2024-08-29 01:32:49 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 01:32:49 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 01:32:49 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:29:08 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 09:29:08 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 09:29:08 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:30:00 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 09:30:00 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 09:30:00 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:31:22 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:578 - Wallet path exists
+2024-08-29 09:32:25 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:1304 - Validation error
+2024-08-29 09:39:02 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 09:39:02 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 09:39:02 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:43:47 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 09:43:47 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 09:43:47 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:43:53 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:1250 - Wallet already exists
+2024-08-29 09:46:45 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 09:46:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 09:46:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 09:46:59 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:1250 - Wallet already exists
+2024-08-29 09:47:56 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:578 - Wallet path exists
+2024-08-29 09:48:30 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:396 - error parsing data Connection refused (os error 111)
+2024-08-29 09:49:04 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:578 - Wallet path exists
+2024-08-29 09:49:12 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:392 - Transfer wallet not found
+2024-08-29 09:50:04 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:392 - Transfer wallet not found
+2024-08-29 10:41:31 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 10:41:31 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:90 - Hello  3000
+2024-08-29 10:41:31 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:91 - Server running 127.0.0.1:3000
+2024-08-29 10:41:41 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:392 - Insufficient funds
+2024-08-29 10:42:20 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:396 - error parsing data Connection refused (os error 111)
+2024-08-29 10:42:34 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:392 - Unauthorized to make transfer
+2024-08-29 10:42:56 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:392 - Unauthorized to make transfer
+2024-08-29 10:43:06 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src/blockchain/broadcast.rs:396 - error parsing data Connection refused (os error 111)
+2024-08-29 11:18:35 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 11:18:35 [vhenncoin_1_0_0::blockchain::node] ERROR vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:96 - tcp bind error invalid socket address
+2024-08-29 11:19:39 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 11:19:39 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-08-29 11:19:39 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-08-29 11:20:30 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 11:20:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-08-29 11:20:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-08-29 12:31:29 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-08-29 12:31:29 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-08-29 12:31:29 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:45:39 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 17:45:39 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 17:45:39 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:48:07 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 17:48:07 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 17:48:07 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:52:56 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 17:52:56 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 17:52:56 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:54:40 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 17:54:40 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 17:54:40 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:55:05 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:1250 - WalletExists
+2024-09-01 17:56:16 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 17:56:16 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 17:56:16 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-09-01 17:56:22 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src/handlers/handlers.rs:1250 - WalletExists
+2024-09-01 18:03:50 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-09-01 18:03:50 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:100 - Hello  3000
+2024-09-01 18:03:50 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src/blockchain/node.rs:101 - Server running 10.255.255.254:3000
+2024-11-28 21:46:34 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-11-28 21:46:34 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2024-11-28 21:46:34 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.18.0.1:3000
+2024-11-28 22:08:45 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-11-28 22:08:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2024-11-28 22:08:45 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.18.0.1:3000
+2024-11-28 22:09:26 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:57 -  error getting user data No data
+2024-11-28 22:09:26 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - No data
+2024-11-28 22:09:33 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:57 -  error getting user data No data
+2024-11-28 22:09:33 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - No data
+2024-11-28 22:11:08 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:57 -  error getting user data No data
+2024-11-28 22:11:08 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - No data
+2024-11-28 22:12:25 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-11-28 22:12:25 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2024-11-28 22:12:25 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.18.0.1:3000
+2024-11-28 22:12:41 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:57 -  error getting user data No data
+2024-11-28 22:12:41 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - No data
+2024-11-28 22:15:09 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-11-28 22:15:09 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2024-11-28 22:15:09 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.18.0.1:3000
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"dodoman","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::kv_service] DEBUG vhenncoin_1_0_0::blockchain::kv_service::src\blockchain\kv_service.rs:110 - NO WALLET FOUND
+2024-11-28 22:16:04 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:57 -  error getting user data No data
+2024-11-28 22:16:04 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - No data
+2024-11-28 22:21:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+2024-11-28 22:21:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2024-11-28 22:21:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateUserId
+2024-11-28 22:21:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2024-11-28 22:21:44 [vhenncoin_1_0_0::blockchain::kv_service] DEBUG vhenncoin_1_0_0::blockchain::kv_service::src\blockchain\kv_service.rs:110 - NO WALLET FOUND
+2024-11-28 22:22:21 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+2024-11-28 22:22:21 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2024-11-28 22:22:21 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2024-11-28 22:22:21 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2024-11-30 09:36:13 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2024-11-30 09:36:13 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2024-11-30 09:36:13 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.18.0.1:3000
+2025-01-07 13:30:26 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-07 13:30:26 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-07 13:30:26 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-07 13:33:26 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-07 13:33:26 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-07 13:33:26 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-07 13:33:42 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"123456"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+2025-01-07 13:33:42 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:33:42 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:33:42 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:33:42 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:34:58 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"1234567"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+2025-01-07 13:34:58 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:34:58 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:34:58 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:34:58 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:43:37 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"1234567"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+2025-01-07 13:43:37 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:43:37 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:43:37 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:43:37 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:43:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"1234567"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+2025-01-07 13:43:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:43:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:43:44 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:43:44 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:43:51 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"1234567"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+2025-01-07 13:43:51 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:43:51 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:43:51 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:43:51 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:44:03 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"123456"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+2025-01-07 13:44:03 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:44:03 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:44:03 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 13:44:03 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 13:44:09 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+2025-01-07 13:44:09 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 13:44:09 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 13:44:09 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 20:54:59 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-07 20:54:59 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-07 20:54:59 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 192.168.27.222:3000
+2025-01-07 20:55:53 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"123456"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+2025-01-07 20:55:53 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 20:55:53 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 20:55:53 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-07 20:55:53 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:1316 - Validation error
+2025-01-07 20:56:27 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+2025-01-07 20:56:27 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-07 20:56:27 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-07 20:56:27 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-10 14:25:00 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-10 14:25:00 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-10 14:25:00 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-10 14:28:24 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+2025-01-10 14:28:24 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-10 14:28:24 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-10 14:28:24 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-12 22:30:29 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-12 22:30:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-12 22:30:30 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : ValidateUserId
+{"user_name":"james","password":"12345"}
+
+
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
+2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0

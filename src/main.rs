@@ -1,9 +1,14 @@
 extern crate core;
 
 use std::env;
-use actix_web::{get, web, App, HttpServer, Responder};
+use std::str::FromStr;
+use actix_web::{rt, get, web, App, HttpServer, Responder, post};
 use actix_web::web::{Data, resource, route, service};
 
+use log::{debug, error, info, LevelFilter};
+use log4rs::append::console::ConsoleAppender;
+use log4rs::{Config, Handle};
+use log4rs::config::{Appender, Root};
 
 mod controllers;
 use controllers::{
@@ -11,21 +16,34 @@ use controllers::{
 
 };
 mod models;
+mod handlers;
 use models::{response};
 mod blockchain;
 use blockchain::wallet;
 use blockchain::transfer;
+use sha2::digest::consts::U256;
+use utils::env::get_env;
+use crate::blockchain::broadcast::{broadcast_request_http, get_servers};
 use crate::blockchain::kv_store::KvStore;
+use crate::blockchain::mongo_store::WalletService;
 use crate::blockchain::node::Node;
+use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
+use crate::utils::test::test_dd;
 
 mod utils;
 mod req_models;
 mod middlewares;
 
 
-
+use env_file_reader::read_file;
+use std::thread;
+use actix_web::dev::Server;
+use futures_util::future::join_all;
+use crate::handlers::handlers::Handler;
+use crate::models::db::MongoService;
+use crate::models::request::HttpMessage;
 
 
 #[get("/")]
@@ -39,91 +57,163 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 }
 
 // std::io::Result<()>
-#[actix_web::main]
-async fn main() {
+
+
+
+fn main() {
+    // test_dd();
+   // utils::test::zip();
+//    match Wallet::seed_gen_keys("wet_whitej***"){
+//     Ok(_)=>{},
+//     Err(err)=>{println!("{}", err.to_string())}
+//    }
+
+//    return;
     env::set_var("RUST_BACKTRACE", "full");
 
-    let kv_store =match  KvStore::create_db("chain".to_string(),r"\data\tomas\".to_string()){
-        Ok(kv_store)=>{kv_store},
-        Err(err)=>{return println!("{}",err.to_string())}
-    };
-    let chain = Chain{ chain: vec![Block{
-        id: "hcb d n".to_string(),
-        sender_address: "sender".to_string(),
-        receiver_address: "".to_string(),
-        date_created: "".to_string(),
-        hash: "jndljvnkfj".to_string(),
-        amount: 0.0,
-        public_key: "".to_string(),
-    }] };
-    match kv_store.save(Some(chain)){
-        Ok(_)=>{println!("successful ")},
-        Err(err)=>{return println!("{}",err.to_string())}
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    info!("Starting server..");
+
+    dotenv::dotenv().ok();
+
+    if get_env("TCP_ADDRESS") == ""{
+        error!("IP address not configured");
+        return ;
     }
 
-    //Node::serve();
-    // wallet::Wallet::create_wallet("Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
-    // "nMCgCIQDmYZuKCBMCGX8ApVNzV3v6fn8IyTghmWe1mBTK8Y5LOwIDAQAB".to_string());
+    match Node::setup_digital_id_folders(){
+        Ok(_)=>{},
+        Err(err)=>{
+            error!("error setting up id folders{}", err.to_string());
+            //panic!()
+            return;
+        }
+    }
 
-    // match transfer::Transfer::transfer("David".to_string(), "john".to_string(), 10.0) {
+    // match Node::discover_c() {
     //     Ok(_)=>{},
     //     Err(err)=>{
-    //         println!("{:?}", err)
+    //         debug!("{}", err.to_string());
     //     }
     // }
-    // match transfer::Transfer::validate("Vcfd8019b4ace8b3b2ee8a7da662a1baaf2bf3f2201001fc0d1757d04cd31980d9".to_string(),
-    //                                    "Vcd0e7061eb04343c31118725afa6853603db77a0658deeb1667523336211efbe6".to_string(),
-    //
-    // ) { }
+    // match Node::notifiy_network_new_node(){
+    //     Ok(_)=>{}, 
+    //     Err(err)=>{
+    //         debug!("{}", err.to_string()); 
+    //     }
+    // }
+    Node::serve();
 
-    // match transfer::Transfer::sign_messafe("LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ0KTUlHckFnRUFBaUVBeS9Ub05MVW5pakR4NytjZk8yZ3pnVEM5ZGdqbENncDV5eVlCR0tJejlCa0NBd0VBQVFJZw0KQXk0NGlNbmlhZmRGYnBaT0dHRVJuSVVBaUFEKy9IOXQ3Tk55V1R6c3VBRUNFUURYbHJqTk8wekQwaVlpRmM1UQ0KUlZhWkFoRUE4akFCZkFxT0ZITjZsdW1kcWgxNWdRSVJBS0V5N3ExdVdLRFhBbkpjRWE4Tm1Za0NFQ3lBR2FXNw0KSXNRck85bEM3ODkwUHdFQ0VRQ1JIME1Ga1N5RW9MWU94R1d1aWJVRw0KLS0tLS1FTkQgUlNBIFBSSVZBVEUgS0VZLS0tLS0NCg".to_string(),
-    // "Hello".to_string()) {
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         println!("{:?}", err)
-    //     }
-    // }
+}
 
-    // match transfer::Transfer::verify("LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tDQpNQ2dDSVFETDlPZzB0U2VLTVBIdjV4ODdhRE9CTUwxMkNPVUtDbm5MSmdFWW9qUDBHUUlEQVFBQg0KLS0tLS1FTkQgUlNBIFBVQkxJQyBLRVktLS0tLQ0K".to_string(),
-    //                                  "M8EnvyXyi9fI_FmDPjChXRLlCQxpkZRVQec1WsPYXqU".to_string(),
-    //                                  "Hello".to_string()){
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         println!("{:?}", err.to_string())
-    //     }
-    // };
-    // match wallet::Wallet::get_balance(&"David".to_string()){
-    //     Ok(data)=>{println!("{:?}", data)},
-    //     Err(err)=>{
-    //         println!("{:?}", err)
-    //     }
-    // }
-    // transfer::Transfer::edd_sign("MFMCAQEwBQYDK2VwBCIEIN-TKDHHhxdhe1HgXuoqhBf4AV2gL5mMU5B1tDzrXT3aoSMDIQBOwJ1dFomg3tbRbXRnGZja545SWrbtvHq7hezTbH3h6Q".to_string(),
-    // "hello this is some cary shit man i am teling you".to_string());
-    // transfer::Transfer::edd_verify("TsCdXRaJoN7W0W10ZxmY2ueOUlq27bx6u4Xs02x94ek".to_string(),
-    //     "z0XcX93FV7vmo6V643uxCiSQr7hAAamHma5qoyUZYaVv66EfGwfO2xXE1Scr2QW7O2CaNKxmdTlCqsYf0KXEAQ".to_string(),
-    // "hello".to_string());
-    // transfer::Transfer::generate_wallet()
-    // wallet::Wallet::generate_key();
-    // wallet::Wallet::generate_key();
-    // HttpServer::new(move|| {
-    //     App::new()
-    //
-    //
-    //         // USER CONTROLLERS
-    //
-    //         .service(
-    //             // all authenticated endpoints
-    //             web::scope("api/v1/")
-    //                 .service(wallet_controller::create_wallet)
-    //         )
-    //         // .service(user_controller::create_user)
-    //         // .service(user_controller::login_user)
-    //         // .service(power_ups_controller::use_power_up)
-    //         // .service(user_controller::get_code)
-    //         //
-    // })
-    //     .bind(("127.0.0.1", 80))?
-    //     .run()
-    //     .await
+
+//#[actix_web::main]
+#[tokio::main]
+async fn start_http_server()  ->Server{
+    debug!("Stat http func works");
+    let http_port = match env::var("HTTP_PORT"){
+        Ok(data)=>{data},
+        Err(err)=>{
+            error!("{}",err);
+            "8000".to_string()
+        }
+    };
+    debug!("port number  {}", http_port);
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .service(route_to_tcp)
+
+    })
+        .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
+        .unwrap()
+        .run()
+
+
+
+    //let srv_handle = srv.handle();
+    //rt::spawn(srv);
+    //info!("running http server on localhost:{}", http_port);
+
+    //srv_handle.stop(false).await;
+
+}
+
+#[post("/send_message")]
+async fn route_to_tcp(req: String) -> String {
+    let message = req;
+    debug!("{}", message.to_owned());
+    let data = message;
+    debug!("Request Data : {}", data );
+
+    let data_set :Vec<&str>= data.split(r"\n").collect();
+    debug!("raw action name {}", data_set[0]);
+
+    let mut response = String::new();
+    let action_name = data_set.get(0);
+    let action_name = match action_name {
+        Some(data)=>{data},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No action name");
+        }
+    };
+    let is_broadcasted = match data_set.get(4){
+        Some(data)=>{data.to_string()},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No is broadcasted");
+        } 
+    };
+
+    let message = match data_set.get(1){
+        Some(data)=>{data.to_string()},
+        None =>{
+            return format!("0{}{}",r"\n","request data error. No message");
+        }   
+    };
+
+    debug!("action name {}", action_name);
+    debug!(" is broadcasted {}", is_broadcasted);
+    match *action_name{
+
+        "CreateWallet" =>{
+            debug!("Create wallet now");
+            response = Handler::create_wallet(&data_set[1].to_string(), &mut None, is_broadcasted.clone());
+            if is_broadcasted == "0" {
+                debug!("broadcasting ");
+                broadcast_request_http("CreateWallet".to_string(),data_set[1].to_string()).await
+            }
+        },
+        "Transfer"=>{
+            response = Handler::transfer(message.clone(), &mut None, is_broadcasted.clone());
+            if is_broadcasted == "0" {
+                debug!("broadcasting ");
+                broadcast_request_http("Transfer".to_string(),message).await
+            }
+        },
+        "GetBalance"=>{
+            response = Handler::get_balalnce(message.clone(), &mut None).await;
+        },
+        "GetNodeBalance"=>{
+            response = Handler::get_node_balalnce(message.clone()).await;
+        },
+        "GetNodeList"=>{
+            // get all server nodes
+            debug!("Handling node request");
+            response = Handler::get_servers();
+            debug!("{}", response);
+        },
+        "AddNode"=>{
+            response = Handler::add_node(data_set[1].to_string());
+        },
+        "GetNodeWalletList"=>{
+            response = Handler::get_node_wallet_list().await;
+        },
+        "GetWalletData"=>{
+            response = Handler::get_single_wallet(message).await
+        },
+
+        _ => {}
+    }
+    
+    response
 }
