@@ -385,10 +385,10 @@ impl Wallet {
             receiver_address: req.address.to_owned(),
             date_created: get_date_time(),
             hash: "".to_string(),
-            amount: BigDecimal::from_str("50000000000.0").unwrap(),
+            amount: BigDecimal::from_str("0.0").unwrap(),
             prev_hash:"000000000".to_string(),
             public_key: pair.public_key.clone(),
-            balance: BigDecimal::from_str("50000000000.0").unwrap(),
+            balance: BigDecimal::from_str("0.0").unwrap(),
             trx_h: Some("000".to_string())
         };
         
