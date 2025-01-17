@@ -309,3 +309,143 @@
 2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
 2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name ValidateUserId
 2025-01-12 22:32:30 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:43:03 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-16 22:43:03 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-16 22:43:03 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:46:10 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::kv_service] DEBUG vhenncoin_1_0_0::blockchain::kv_service::src\blockchain\kv_service.rs:110 - NO WALLET FOUND
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:77 -  error saving data on disk No data
+2025-01-16 22:46:10 [vhenncoin_1_0_0::blockchain::wallet] ERROR vhenncoin_1_0_0::blockchain::wallet::src\blockchain\wallet.rs:345 - error No data
+2025-01-16 22:46:10 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - No data
+2025-01-16 22:46:45 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:46:45 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:46:45 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:46:45 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:46:45 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:46:45 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:46:45 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - Wallet path exists
+2025-01-16 22:50:55 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-16 22:50:55 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-16 22:50:55 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-16 22:54:50 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-16 22:54:50 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-16 22:54:50 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:55:08 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::kv_service] DEBUG vhenncoin_1_0_0::blockchain::kv_service::src\blockchain\kv_service.rs:110 - NO WALLET FOUND
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:77 -  error saving data on disk No data
+2025-01-16 22:55:08 [vhenncoin_1_0_0::blockchain::wallet] ERROR vhenncoin_1_0_0::blockchain::wallet::src\blockchain\wallet.rs:352 - error No data
+2025-01-16 22:55:08 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - No data
+2025-01-16 22:56:23 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-16 22:56:23 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-16 22:56:23 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:56:33 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::kv_service] DEBUG vhenncoin_1_0_0::blockchain::kv_service::src\blockchain\kv_service.rs:110 - NO WALLET FOUND
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::digital_id] ERROR vhenncoin_1_0_0::blockchain::digital_id::src\blockchain\digital_id.rs:77 -  error saving data on disk No data
+2025-01-16 22:56:33 [vhenncoin_1_0_0::blockchain::wallet] ERROR vhenncoin_1_0_0::blockchain::wallet::src\blockchain\wallet.rs:352 - error No data
+2025-01-16 22:56:33 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - No data
+2025-01-16 22:59:24 [vhenncoin_1_0_0] INFO vhenncoin_1_0_0::src/main.rs:75 - Starting server..
+2025-01-16 22:59:24 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:100 - Hello  3000
+2025-01-16 22:59:24 [vhenncoin_1_0_0::blockchain::node] INFO vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:101 - Server running 172.20.10.2:3000
+2025-01-16 22:59:35 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:59:35 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:59:35 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:59:35 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:59:35 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:59:35 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:59:35 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - Wallet path exists
+2025-01-16 22:59:52 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 22:59:52 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 22:59:52 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 22:59:52 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 22:59:52 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 22:59:52 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 22:59:53 [vhenncoin_1_0_0::blockchain::wallet] DEBUG vhenncoin_1_0_0::blockchain::wallet::src\blockchain\wallet.rs:440 -  wallet string .... {"id":"383e1d0a-127f-4e01-8740-7c016efda59e","address":"genesis","wallet_name":"","password_hash":"5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5","created_at":"16/01/2025 21:59:52","public_key":"BK1fgBGuqhD8knrIxvzU7TK1r4pUIk0XOdVTPVnQhEKlyWA_GW4LJErPP1i0FPIq6i5b3LMd5AL5eLEJJP-qQyc","is_private":false,"transaction_limit":false,"transaction_limit_value":0.0,"limit_period":"Daily","is_vault":false,"release_date":"","chain":{"chain":[{"id":"0f653714-39f6-483d-b718-b741eb58a4eb","transaction_id":"d16cafd6848ec7ff7771a2ccfbd676516fc5200722d03f89adc11d90dbe8a424","sender_address":"000000000","receiver_address":"genesis","date_created":"16/01/2025 21:59:52","hash":"afbdb7de45feb82b4feb53608416521808b413467a8fc613e7454ce7c1e1df5b","prev_hash":"000000000","amount":"50000000000.0","public_key":"BK1fgBGuqhD8knrIxvzU7TK1r4pUIk0XOdVTPVnQhEKlyWA_GW4LJErPP1i0FPIq6i5b3LMd5AL5eLEJJP-qQyc","balance":"50000000000.0","trx_h":"000"}]},"is_vcid_id":false,"vcid_id_user_name":""}
+2025-01-16 22:59:53 [vhenncoin_1_0_0::blockchain::wallet] DEBUG vhenncoin_1_0_0::blockchain::wallet::src\blockchain\wallet.rs:498 - {"id":"383e1d0a-127f-4e01-8740-7c016efda59e","address":"genesis","wallet_name":"","password_hash":"5994471ABB01112AFCC18159F6CC74B4F511B99806DA59B3CAF5A9C173CACFC5","created_at":"16/01/2025 21:59:52","public_key":"BK1fgBGuqhD8knrIxvzU7TK1r4pUIk0XOdVTPVnQhEKlyWA_GW4LJErPP1i0FPIq6i5b3LMd5AL5eLEJJP-qQyc","is_private":false,"transaction_limit":false,"transaction_limit_value":0.0,"limit_period":"Daily","is_vault":false,"release_date":"","chain":{"chain":[{"id":"0f653714-39f6-483d-b718-b741eb58a4eb","transaction_id":"d16cafd6848ec7ff7771a2ccfbd676516fc5200722d03f89adc11d90dbe8a424","sender_address":"000000000","receiver_address":"genesis","date_created":"16/01/2025 21:59:52","hash":"afbdb7de45feb82b4feb53608416521808b413467a8fc613e7454ce7c1e1df5b","prev_hash":"000000000","amount":"50000000000.0","public_key":"BK1fgBGuqhD8knrIxvzU7TK1r4pUIk0XOdVTPVnQhEKlyWA_GW4LJErPP1i0FPIq6i5b3LMd5AL5eLEJJP-qQyc","balance":"50000000000.0","trx_h":"000"}]},"is_vcid_id":false,"vcid_id_user_name":""}
+2025-01-16 22:59:53 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:572 - broadcasting ...... 
+2025-01-16 22:59:53 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:29 - serverlist file path C:\Users\David\Documents\projects\rust\vhenncoin_core/server_list.json
+2025-01-16 22:59:53 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:47 - file content [{"id":"","ip_address":"127.0.0.1:400","public_key":"","http_address":"http://127.0.0.1:400"},
+{"id":"","ip_address":"127.0.0.1:400","public_key":"","http_address":""},
+{"id":"","ip_address":"127.0.0.1:300","public_key":"","http_address":"http://127.0.0.1:300"},
+{"id":"","ip_address":"127.0.0.1:200","public_key":"","http_address":"http://127.0.0.1:200"}]
+2025-01-16 22:59:53 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:58 - server list: [ServerData { id: "", ip_address: "127.0.0.1:400", public_key: "", http_address: "http://127.0.0.1:400" }, ServerData { id: "", ip_address: "127.0.0.1:400", public_key: "", http_address: "" }, ServerData { id: "", ip_address: "127.0.0.1:300", public_key: "", http_address: "http://127.0.0.1:300" }, ServerData { id: "", ip_address: "127.0.0.1:200", public_key: "", http_address: "http://127.0.0.1:200" }]
+2025-01-16 22:59:55 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:396 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:06 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : CreateWallet
+{"address":"genesis","password":"12345","wallet_name":"", "vcid_username":"", "is_vcid":false}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                              
+2025-01-16 23:01:06 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 23:01:06 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name CreateWallet
+2025-01-16 23:01:06 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 23:01:06 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:178 - Create wallet now
+2025-01-16 23:01:06 [vhenncoin_1_0_0::handlers::handlers] DEBUG vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:560 - Done decoding message
+2025-01-16 23:01:06 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:578 - Wallet path exists
+2025-01-16 23:01:32 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:120 - Request Data : GetBalance
+{"address":"genesis"}
+0
+0
+0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+2025-01-16 23:01:32 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:126 - data piece count 6
+2025-01-16 23:01:32 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:172 - action name GetBalance
+2025-01-16 23:01:32 [vhenncoin_1_0_0::blockchain::node] DEBUG vhenncoin_1_0_0::blockchain::node::src\blockchain\node.rs:173 -  is broadcasted 0
+2025-01-16 23:01:37 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:29 - serverlist file path C:\Users\David\Documents\projects\rust\vhenncoin_core/server_list.json
+2025-01-16 23:01:37 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:47 - file content [{"id":"","ip_address":"127.0.0.1:400","public_key":"","http_address":"http://127.0.0.1:400"},
+{"id":"","ip_address":"127.0.0.1:400","public_key":"","http_address":""},
+{"id":"","ip_address":"127.0.0.1:300","public_key":"","http_address":"http://127.0.0.1:300"},
+{"id":"","ip_address":"127.0.0.1:200","public_key":"","http_address":"http://127.0.0.1:200"}]
+2025-01-16 23:01:37 [vhenncoin_1_0_0::blockchain::broadcast] DEBUG vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:58 - server list: [ServerData { id: "", ip_address: "127.0.0.1:400", public_key: "", http_address: "http://127.0.0.1:400" }, ServerData { id: "", ip_address: "127.0.0.1:400", public_key: "", http_address: "" }, ServerData { id: "", ip_address: "127.0.0.1:300", public_key: "", http_address: "http://127.0.0.1:300" }, ServerData { id: "", ip_address: "127.0.0.1:200", public_key: "", http_address: "http://127.0.0.1:200" }]
+2025-01-16 23:01:39 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:719 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:39 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:201 - error ... No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:41 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:719 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:41 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:201 - error ... No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:43 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:719 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:43 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:201 - error ... No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:45 [vhenncoin_1_0_0::blockchain::broadcast] ERROR vhenncoin_1_0_0::blockchain::broadcast::src\blockchain\broadcast.rs:719 - error parsing data No connection could be made because the target machine actively refused it. (os error 10061)
+2025-01-16 23:01:45 [vhenncoin_1_0_0::handlers::handlers] ERROR vhenncoin_1_0_0::handlers::handlers::src\handlers\handlers.rs:201 - error ... No connection could be made because the target machine actively refused it. (os error 10061)
