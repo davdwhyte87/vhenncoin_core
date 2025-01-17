@@ -307,6 +307,13 @@ impl Wallet {
 
     // create wallet with rocks db kv store
     pub fn create_wallet_r(req:CreateWalletReq)->Result<(), Box<dyn Error>>{
+        let path = "data";
+        if !fs::metadata(path).is_ok() {
+            println!("Directory does not exist. Creating {}", path);
+            fs::create_dir(path)?;
+            println!("Directory created: {}", path);
+        }
+
         let d_path = format!("data/{}", req.address) ;
         if !Path::new(d_path.as_str()).exists() {
             let folder = fs::create_dir_all(d_path.as_str());
@@ -339,13 +346,13 @@ impl Wallet {
 
 
         // get digital id
-        let digitalId = match DigitalID::get_user(&req.vcid_username){
-            Ok(data)=>{data},
-            Err(err)=>{
-                error!("error {}", err.to_string());
-                return Err(err.into())
-            }
-        };
+        // let digitalId = match DigitalID::get_user(&req.vcid_username){
+        //     Ok(data)=>{data},
+        //     Err(err)=>{
+        //         error!("error {}", err.to_string());
+        //         return Err(err.into())
+        //     }
+        // };
 
         let mut hash = "".to_string();
         // write input message
@@ -378,10 +385,10 @@ impl Wallet {
             receiver_address: req.address.to_owned(),
             date_created: get_date_time(),
             hash: "".to_string(),
-            amount: BigDecimal::from_str("0.0").unwrap(),
+            amount: BigDecimal::from_str("50000000000.0").unwrap(),
             prev_hash:"000000000".to_string(),
             public_key: pair.public_key.clone(),
-            balance: BigDecimal::from_str("0.0").unwrap(),
+            balance: BigDecimal::from_str("50000000000.0").unwrap(),
             trx_h: Some("000".to_string())
         };
         
