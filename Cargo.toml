@@ -5,7 +5,7 @@ edition = "2021"
 
 
 [[bin]]
-name = "vhenncoin_1_0_0"
+name = "vhenncoin"
 path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

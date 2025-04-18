@@ -120,4 +120,4 @@ Create wallet
 Pull requests are welcome! Feel free to fork the repo, improve the blockchain logic, add new features, or create a web dashboard.
 
 ## 🔐 License
-MIT License © 2025 [Your Name or Team Name]
+MIT License © 2025 Vhennus team
