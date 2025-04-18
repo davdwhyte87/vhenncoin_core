@@ -2,7 +2,8 @@ use std::io::Write;
 use std::net::TcpStream;
 use log::error;
 use serde::{Deserialize, Serialize};
-
+use serde::de::DeserializeOwned;
+use crate::models::response::NResponse;
 
 pub struct Response {
     
@@ -58,4 +59,16 @@ impl TCPResponse {
             }
         }
     }
+
+    pub fn send_response_x<T>(response:NResponse<T>, stream: &mut TcpStream) where T: Serialize{
+        let resp_string = serde_json::to_string(&response).unwrap();
+        match stream.write(resp_string.as_bytes()){
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("{}", err.to_string())
+            }
+        }
+    }
+    
+    
 }

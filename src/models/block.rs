@@ -1,7 +1,9 @@
 use std::clone;
 
 use bigdecimal::BigDecimal;
+use ring::aead::Nonce;
 use serde::{Deserialize, Serialize};
+use crate::models::transaction::Transaction;
 
 // this represents a chunck of transaction data in a wallet
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -22,5 +24,16 @@ pub struct Block{
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Chain{
     pub chain: Vec<Block>
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct VBlock {
+
+    pub previous_hash: String,
+    pub transactions: Vec<Transaction>,
+    pub timestamp: i64,
+    pub hash: String,
+    pub block_height: u64,
 }
 

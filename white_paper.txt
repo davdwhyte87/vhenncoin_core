@@ -66,3 +66,11 @@ node sync
 
 - digital ID system users can 
 - digital ID   
+
+
+-get transaction from tcp stream
+- verify sender and recieer accounts exist
+- verify the transaction signature
+- verify the user has enough funds to spend
+- verify account constraints
+- add to memool
