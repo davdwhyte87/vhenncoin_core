@@ -40,8 +40,13 @@ mod middlewares;
 use env_file_reader::read_file;
 use std::thread;
 use actix_web::dev::Server;
+use bigdecimal::BigDecimal;
+use dotenv::dotenv;
 use futures_util::future::join_all;
+use once_cell::sync::Lazy;
+use redb::{Database, TableDefinition};
 use crate::handlers::handlers::Handler;
+use crate::models::constants::{ACCOUNTS_TABLE, BLOCKS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
 use crate::models::db::MongoService;
 use crate::models::request::HttpMessage;
 
@@ -59,8 +64,8 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 // std::io::Result<()>
 
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     // test_dd();
    // utils::test::zip();
 //    match Wallet::seed_gen_keys("wet_whitej***"){
@@ -102,118 +107,52 @@ fn main() {
     //         debug!("{}", err.to_string()); 
     //     }
     // }
-    Node::serve();
+    Node::serve().await;
 
 }
 
 
-//#[actix_web::main]
-#[tokio::main]
-async fn start_http_server()  ->Server{
-    debug!("Stat http func works");
-    let http_port = match env::var("HTTP_PORT"){
+fn create_database()->Result<Database, Box<dyn std::error::Error>>{
+    let path = format!("data/db.redb") ;
+    let db =match  Database::create(path){
         Ok(data)=>{data},
         Err(err)=>{
-            error!("{}",err);
-            "8000".to_string()
+            error!("error creating db {}", err.to_string());
+            return Err(err.into())
         }
     };
-    debug!("port number  {}", http_port);
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(route_to_tcp)
 
-    })
-        .bind(("127.0.0.1", u16::from_str(http_port.as_str()).unwrap()))
-        .unwrap()
-        .run()
+    let METADATA: TableDefinition<&str, String> = TableDefinition::new(META_DATA_TABLE);
+    let BLOCKS: TableDefinition<&str, String> = TableDefinition::new(BLOCKS_TABLE);
+    let ACCOUNTS: TableDefinition<&str, String> = TableDefinition::new(ACCOUNTS_TABLE);
+    let TRANSACTIONS_LOG: TableDefinition<&str, String> = TableDefinition::new(TRANSACTIONS_LOG_TABLE);
 
-
-
-    //let srv_handle = srv.handle();
-    //rt::spawn(srv);
-    //info!("running http server on localhost:{}", http_port);
-
-    //srv_handle.stop(false).await;
-
-}
-
-#[post("/send_message")]
-async fn route_to_tcp(req: String) -> String {
-    let message = req;
-    debug!("{}", message.to_owned());
-    let data = message;
-    debug!("Request Data : {}", data );
-
-    let data_set :Vec<&str>= data.split(r"\n").collect();
-    debug!("raw action name {}", data_set[0]);
-
-    let mut response = String::new();
-    let action_name = data_set.get(0);
-    let action_name = match action_name {
-        Some(data)=>{data},
-        None =>{
-            return format!("0{}{}",r"\n","request data error. No action name");
-        }
-    };
-    let is_broadcasted = match data_set.get(4){
-        Some(data)=>{data.to_string()},
-        None =>{
-            return format!("0{}{}",r"\n","request data error. No is broadcasted");
-        } 
-    };
-
-    let message = match data_set.get(1){
-        Some(data)=>{data.to_string()},
-        None =>{
-            return format!("0{}{}",r"\n","request data error. No message");
-        }   
-    };
-
-    debug!("action name {}", action_name);
-    debug!(" is broadcasted {}", is_broadcasted);
-    match *action_name{
-
-        "CreateWallet" =>{
-            debug!("Create wallet now");
-            response = Handler::create_wallet(&data_set[1].to_string(), &mut None, is_broadcasted.clone());
-            if is_broadcasted == "0" {
-                debug!("broadcasting ");
-                broadcast_request_http("CreateWallet".to_string(),data_set[1].to_string()).await
-            }
-        },
-        "Transfer"=>{
-            response = Handler::transfer(message.clone(), &mut None, is_broadcasted.clone());
-            if is_broadcasted == "0" {
-                debug!("broadcasting ");
-                broadcast_request_http("Transfer".to_string(),message).await
-            }
-        },
-        "GetBalance"=>{
-            response = Handler::get_balalnce(message.clone(), &mut None).await;
-        },
-        "GetNodeBalance"=>{
-            response = Handler::get_node_balalnce(message.clone()).await;
-        },
-        "GetNodeList"=>{
-            // get all server nodes
-            debug!("Handling node request");
-            response = Handler::get_servers();
-            debug!("{}", response);
-        },
-        "AddNode"=>{
-            response = Handler::add_node(data_set[1].to_string());
-        },
-        "GetNodeWalletList"=>{
-            response = Handler::get_node_wallet_list().await;
-        },
-        "GetWalletData"=>{
-            response = Handler::get_single_wallet(message).await
-        },
-
-        _ => {}
+    let write_txn = db.begin_write()?;
+    {
+        write_txn.open_table(METADATA)?;
+        write_txn.open_table(BLOCKS)?;
+        write_txn.open_table(ACCOUNTS)?;
+        write_txn.open_table(TRANSACTIONS_LOG)?;
     }
+    write_txn.commit()?;
     
-    response
+    Ok(db)
 }
+
+pub struct AppConfig {
+    pub port: u16,
+    pub tcp_address: String,
+    pub version: BigDecimal
+}
+
+pub static APP_CONFIG: Lazy<AppConfig> = Lazy::new(|| {
+    dotenv().ok(); 
+    AppConfig {
+        port: env::var("PORT")
+            .unwrap_or_else(|_| "3000".into())
+            .parse()
+            .expect("Invalid SERVER_PORT"),
+        tcp_address: "".to_string(),
+        version: BigDecimal::from_str("0.2").unwrap_or_default()
+    }
+});

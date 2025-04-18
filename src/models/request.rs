@@ -1,13 +1,14 @@
-use serde::{Serialize,Deserialize};
+use bigdecimal::BigDecimal;
+use serde::{Serialize, Deserialize};
 
 
 #[derive(Serialize, Deserialize)]
 pub struct TransferReq {
-    pub transaction_id:String,
     pub sender: String,
+    pub nonce:String,
     pub receiver: String,
     pub amount: String,
-    pub sender_password:String
+    pub signature:String
 }
 
 #[derive(Serialize, Deserialize)]
@@ -15,6 +16,11 @@ pub struct GetBalanceReq {
 
     pub address: String,
 
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetUserTransactionsReq {
+    pub address: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -43,10 +49,18 @@ pub struct ValidateUserIDReq{
 #[derive(Serialize, Deserialize)]
 pub struct CreateWalletReq {
     pub address: String,
-    pub password: String,
     pub wallet_name:String,
-    pub vcid_username:String,
-    pub is_vcid:bool
+    pub public_key:String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetAccountReq {
+    pub address: String,
+}
+
+pub struct NRequest <T>{
+    pub action:String, 
+    pub data:T,
 }
 
 

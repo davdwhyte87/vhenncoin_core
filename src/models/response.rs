@@ -26,9 +26,15 @@ pub struct WalletNamesResp{
 #[derive(Serialize,Deserialize)]
 pub struct WalletNamesRespC{
     pub names: Vec<String>
-
 }
 
+
+#[derive(Serialize,Deserialize, Clone, Debug)]
+pub struct NResponse<T>{
+    pub status: i32, // 0=fail 1=success
+    pub message: String,
+    pub data: Option<T>
+}
 
 // 0 = error 1= success 4 = not found 6= unauthorized
 

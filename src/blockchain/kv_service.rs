@@ -2,9 +2,9 @@ use std::{clone, error::Error, path::Path};
 
 use futures::future::ok;
 use log::{debug, error};
-use redb::{Database, TableDefinition};
+use redb::{Database, ReadableTable, TableDefinition};
 use serde::{de::{self, DeserializeOwned}, Deserialize};
-
+use crate::models::block::VBlock;
 
 pub struct KVService{
 
@@ -12,7 +12,7 @@ pub struct KVService{
 
 impl KVService {
     pub fn save(
-        path:String,
+       db: &Database,
         table_name:&str,
         key:String,
         value:String
@@ -21,14 +21,7 @@ impl KVService {
         // let path = format!("id_data/user_data.redb");
     
         let TABLE: TableDefinition<&str, String> = TableDefinition::new(table_name);
-            let db =match  Database::create(path){
-                Ok(data)=>{data},
-                Err(err)=>{
-                    error!("error {}", err.to_string());
-                    return Err(err.into())
-                }
-        };
-    
+
         let write_txn =match  db.begin_write(){
             Ok(data)=>{data},
             Err(err)=>{
@@ -68,25 +61,15 @@ impl KVService {
 
 
     pub fn get_data<T>(
-        path:&str,
+        db:&Database,
         table_name:&str,
         key:&str,
-    )->Result<(T), Box<dyn Error>>where T: DeserializeOwned,{
+    )->Result<Option<T>, Box<dyn Error>>where T: DeserializeOwned,{
 
         let TABLE: TableDefinition<&str, String> = TableDefinition::new(table_name);
         // check if wallet exists 
         
-        if !Path::new(path).exists() {
-            return  Err(Box::from("DB does not exist"));
-        }
-        // open database 
-        let db = match Database::open(path){
-            Ok(data)=>{data},
-            Err(err)=>{
-                error!("{}", err.to_string());
-                return  Err(err.into());
-            }
-        };
+
         let read_txn = match  db.begin_read(){
             Ok(data)=>{data},
             Err(err)=>{
@@ -107,8 +90,8 @@ impl KVService {
                     Some(data)=>{data.value().to_owned()},
                    
                     None=>{
-                        debug!("{}", "NO WALLET FOUND");
-                        return Err(Box::from("No data"))
+                        debug!("data not found {}" ,key);
+                        return Ok(None)
                     }
                 }
                 },
@@ -129,9 +112,49 @@ impl KVService {
             }
         };
 
-        return Ok(data)
+        return Ok(Some(data));
     }
-     
+
+
+
+    pub fn get_all_data<T>(
+        db:&Database,
+        table_name:&str,
+    )->Result<Vec<T>, Box<dyn Error>>where T: DeserializeOwned,{
+
+        let TABLE: TableDefinition<&str, String> = TableDefinition::new(table_name);
+        // check if wallet exists 
+
+
+        let read_txn = match  db.begin_read(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        let table = match read_txn.open_table(TABLE){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("error {}", err.to_string());
+                return Err(err.into())
+            }
+        };
+        
+        let mut blocks:Vec<T> = vec![];
+        for result in table.iter()?{
+            let (height, value) = result?;
+            let block: T = match serde_json::from_str(&value.value()){
+                Ok(block)=>{block},
+                Err(err)=>{
+                    continue;
+                }
+            };
+            blocks.push(block);
+        }
+        return Ok(blocks);
+    }
+
 }
 
 

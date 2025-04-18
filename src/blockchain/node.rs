@@ -25,17 +25,25 @@ use zip::ZipWriter;
 
 use std::env::{self, current_dir};
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 use actix_web::{App, HttpServer};
 use actix_web::dev::Server;
 use hex_literal::len;
 use itertools::Itertools;
 use rand::Rng;
+use redb::Database;
 use serde_json::to_string;
+use tokio::time;
 use crate::blockchain::broadcast::{broadcast_request_tcp, get_node_list_c, get_node_list_http, get_node_list_net, get_node_wallet_list_C, get_servers, save_server_list};
+use crate::blockchain::transfer::Transfer;
 use crate::blockchain::wallet::Wallet;
 use crate::controllers::wallet_controller::create_wallet;
+use crate::{create_database, AppConfig, APP_CONFIG};
 use crate::handlers::handlers::Handler;
+use crate::models::mempool::Mempool;
+use crate::models::response::NResponse;
 use crate::models::server_list::ServerData;
+use crate::models::transaction::Transaction;
 use crate::models::wallet::MongoWallet;
 use crate::utils::constants;
 use crate::utils::env::get_env;
@@ -70,26 +78,20 @@ impl Node {
     }
 
 
-    pub fn serve(){
+    pub async fn serve(){
         
-        let port = match env::var("PORT"){
-            Ok(data)=>{data},
-            Err(err)=>{
-                error!("{}",err);
-                "8000".to_string()
-            }
-        };
-
-        let ifaces = get_if_addrs().expect("Failed to get network interfaces");
-
-        // Filter for the first non-loopback IPv4 address
-        let ip_address = ifaces.iter()
-            .filter(|iface| iface.ip().is_ipv4() && !iface.is_loopback())
-            .map(|iface| iface.ip())
-            .next()
-            .expect("No valid IPv4 address found");
-       
-        let address =format!("{}:{}",ip_address, port);
+        let port = APP_CONFIG.port.to_string();
+        let address = format!("0.0.0.0:{}", port);
+        // let ifaces = get_if_addrs().expect("Failed to get network interfaces");
+        // 
+        // // Filter for the first non-loopback IPv4 address
+        // let ip_address = ifaces.iter()
+        //     .filter(|iface| iface.ip().is_ipv4() && !iface.is_loopback())
+        //     .map(|iface| iface.ip())
+        //     .next()
+        //     .expect("No valid IPv4 address found");
+        // 
+        // let address =format!("{}:{}",ip_address, port);
         let listener = match TcpListener::bind(address.to_owned()){
             Ok(data)=>{data},
             Err(err)=>{
@@ -99,141 +101,150 @@ impl Node {
         };
         info!("{} {}", "Hello ", port);
         info!("Server running {}", address);
-        for stream in listener.incoming() {
-            let mut stream = match stream{
-                Ok(data)=>{data},
-                Err(err)=>{
-                    debug!("tcp stream error {}", err.to_string());
-                    return;
-                }
-            };
 
-             Node::handle_connection(stream);
+        // setup mempool
+        let mempool = Arc::new(Mutex::new(Mempool::new()));
+        let database = match create_database(){
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("create database error {}", err.to_string());
+                return;
+            }
+        };
+        let db = Arc::new(database);
+        let mempool_clone = Arc::clone(&mempool);
+        let db_clone = db.clone();
+        tokio::spawn(async move {
+            Self::mine_blocks(&db_clone, mempool_clone).await;
+        });
+
+        for stream in listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    let mempool = Arc::clone(&mempool);
+                    let db = Arc::clone(&db);
+
+                    tokio::spawn(async move {
+                        Node::handle_connection(stream, mempool, db.as_ref()).await;
+                    });
+                }
+                Err(err) => {
+                    debug!("tcp stream error {}", err);
+                }
+            }
         }
     }
-    pub fn handle_connection(mut stream: TcpStream) {
-        let mut buffer = [0; 512];
+    pub async fn handle_connection(mut stream: TcpStream, mempool: Arc<Mutex<Mempool>>, db:&Database) {
+        let mut buffer = [0u8; 512];
 
-        stream.borrow().read(&mut buffer).unwrap();
-
-        let data = String::from_utf8_lossy(&buffer).to_string();
-        debug!("Request Data : {}", data );
-
-        // let data_set :Vec<&str>= data.split("\n").collect();
-        // debug!("{}", data_set[0]);
-
-        let data_set :Vec<&str>= data.split("\n").collect();
-        debug!("data piece count {}", data_set.len() );
-    
-        let mut response = String::new();
-        let action_name = data_set.get(0);
-        let action_name = match action_name {
-            Some(data)=>{data},
-            None =>{
-               
-                
-                let res= Formatter::response_formatter(
-                    "0".to_string(),
-                     "request data error. No action name".to_string(), 
-                    "".to_string()
-                    );
-                TCPResponse::send_response_txt(res, &mut stream);
+        let size = match stream.read(&mut buffer) {
+            Ok(size) if size > 0 => size,
+            _ => {
+                error!("No data read from stream");
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "error with data".to_string(),
+                    data:None
+                }, &mut stream);
                 return;
             }
         };
-        let is_broadcasted = match data_set.get(4){
-            Some(data)=>{data.to_string()},
-            None =>{
-                
-                let res=  Formatter::response_formatter(
-                    "0".to_string(),
-                     "request data error. No is broadcasted".to_string(), 
-                    "".to_string()
-                    );
-                TCPResponse::send_response_txt(res, &mut stream);
+
+        let data = String::from_utf8_lossy(&buffer[..size]).to_string();
+
+        debug!("Request Data : {}", data );
+        let message: serde_json::Value = match serde_json::from_str(&data){
+            Ok(data )=>{data},
+            Err(err)=>{
+                log::error!("error {}", err.to_string());
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "error decoding request".to_string(),
+                    data:None
+                }, &mut stream);
                 return;
-            } 
+            }
         };
-    
-        let message = match data_set.get(1){
-            Some(data)=>{data.to_string()},
-            None =>{
-               
-                let res=  Formatter::response_formatter(
-                    "0".to_string(),
-                     "request data error. No message".to_string(), 
-                    "".to_string()
-                    );
-                TCPResponse::send_response_txt(res, &mut stream);
+        let action_name = match message["action"].as_str(){
+            Some(action)=>{action},
+            None=>{
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "action is not defined".to_string(),
+                    data:None
+                }, &mut stream);
                 return;
-            }   
+            }
         };
-    
-        debug!("action name {}", action_name);
-        debug!(" is broadcasted {}", is_broadcasted);
-        match *action_name{
-    
-            "CreateWallet" =>{
+        let message_data = &message["data"].to_string();
+        match action_name{
+            "create_wallet" =>{
                 // thread::sleep(Duration::from_secs(5));
                 debug!("Create wallet now");
-                Handler::create_wallet_tcp(&message, &mut stream, is_broadcasted);
+                Handler::create_wallet_tcp(db, message_data, &mut stream, "0".to_string()).await;
             },
-            "Transfer"=>{
-                Handler::transfer_c(message.clone(), &mut stream, is_broadcasted.clone());
+            "transfer"=>{
+                Handler::transfer_c(message_data, &mut stream,"0".to_string(), mempool, db.clone()).await;
             },
-            "GetBalance"=>{
-                thread::sleep(Duration::from_secs(5));
-               Handler::get_balance_c(message.clone(), &mut stream);
+            "get_mempool"=>{
+                Handler::get_mempool(mempool, &mut stream).await;
+               //Handler::get_balance_c(message.clone(), &mut stream);
             },
-            "GetNodeBalance"=>{
-              Handler::get_node_balance_c(message.clone(), &mut stream);
+            "get_account"=>{
+                Handler::get_account(db, message_data, &mut stream).await;
             },
-            "GetNodeList"=>{
-                // get all server nodes
-                debug!("Handling node request");
-                Handler::get_servers_c(&mut stream);
+            "get_last_block_height"=>{
+               
+              Handler::get_last_block_height(db, &mut stream).await;
                 
             },
-            "AddNode"=>{
-                Handler::add_node_c(&message.clone(), &mut stream);
+            "get_last_block"=>{
+                Handler::get_last_block(db, &mut stream).await;
             },
-            "GetNodeWalletList"=>{
-               Handler::get_node_wallet_list_c(&mut stream);
+            "get_all_blocks"=>{
+               Handler::get_all_blocks(db, &mut stream).await;
             },
-            "GetWalletData"=>{
-                //thread::sleep(Duration::from_secs(1));
-                Handler::get_single_wallet_c(message.clone(), &mut stream);
+            "get_user_transactions"=>{
+                Handler::get_user_transactions(message_data, db, &mut stream).await;
             },
             "GetZipChain"=>{
-                Handler::get_chain_zip(&mut stream);
+                //Handler::get_chain_zip(&mut stream);
             },
             "CreateUserId"=>{
-                Handler::create_user_id(message.clone(), &mut stream)
+                //Handler::create_user_id(message.clone(), &mut stream)
             },
             "ValidateUserId"=>{
-                Handler::validate_user_id(message.clone(), &mut stream)
+                //Handler::validate_user_id(message.clone(), &mut stream)
+            },
+            "hello"=>{
+                Handler::hello(&mut stream).await;
             }
-    
-            _ => {}
+            _ => {
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "action not found".to_string(),
+                    data:None
+                }, &mut stream);
+                return; 
+            }
         }
-        
+    }
 
-        // match data_set[0]{
-
-        //     "CreateWallet" =>{
-        //        debug!("Create wallet now");
-        //         Handler::create_wallet(&data_set[1].to_string(), &mut Some(stream), "0".to_string());
-        //     },
-        //     "Transfer"=>{
-        //       Handler::transfer(data_set[1].to_string(), &mut Some(stream), "id".to_string());
-        //     },
-
-        //     _ => {}
-        // }
-        let response = "HTTP/1.1 200 OK\r\n\r\n";
-
-        //stream.write(response.as_bytes()).unwrap();
-        //stream.flush().unwrap();
+    pub async fn mine_blocks(db:&Database, mempool: Arc<Mutex<Mempool>>) {
+       
+        let mut interval = time::interval(Duration::from_secs(30));
+        loop {
+            interval.tick().await;
+            log::info!("Minning new block ...............");
+            let transactions = Transfer::get_all_transactions(mempool.clone()).await;
+            match Transfer::process_transactions(db, mempool.clone(), transactions.clone()).await{
+                Ok(_) => {},
+                Err(err) => {
+                    log::error!("{}", err.to_string());
+                    continue;
+                }
+            };
+        }
     }
 
     pub fn discover_c()->Result<(), Box<dyn Error>>{
