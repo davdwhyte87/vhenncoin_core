@@ -30,7 +30,8 @@ user2 = User("greexy", "cuppythato", "moneybig holluccy")
 
 # ------------------ Network Config ------------------
 
-ip_address = "127.0.0.1"
+local_ip_address = "127.0.0.1"
+test_ip_address = "155.138.221.87"
 port = 3000
 
 # ------------------ Helpers ------------------
@@ -130,7 +131,7 @@ def send_payload(payload):
     print("\n📦 Sending Payload:", payload)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip_address, port))
+        s.connect((test_ip_address, port))
         s.sendall(data)
         s.shutdown(socket.SHUT_WR)
 
@@ -154,11 +155,11 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(user2))
+    #send_payload(build_wallet_payload(genesis_user))
 
     #send_payload(build_transaction_payload(user1, user2.address, Decimal("200.0"), "0"))
 
-    #send_payload(build_get_account_payload(user1))
+    send_payload(build_get_account_payload(genesis_user))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())
