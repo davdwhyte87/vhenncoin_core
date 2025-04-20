@@ -62,6 +62,7 @@ impl TCPResponse {
 
     pub fn send_response_x<T>(response:NResponse<T>, stream: &mut TcpStream) where T: Serialize{
         let resp_string = serde_json::to_string(&response).unwrap();
+        resp_string.push('\n');
         match stream.write_all(resp_string.as_bytes()){
             Ok(_)=>{},
             Err(err)=>{
