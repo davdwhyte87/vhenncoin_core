@@ -62,11 +62,22 @@ impl TCPResponse {
 
     pub fn send_response_x<T>(response:NResponse<T>, stream: &mut TcpStream) where T: Serialize{
         let resp_string = serde_json::to_string(&response).unwrap();
-        match stream.write(resp_string.as_bytes()){
+        match stream.write_all(resp_string.as_bytes()){
             Ok(_)=>{},
             Err(err)=>{
                 error!("{}", err.to_string())
             }
+        }
+
+        // Flush to ensure all bytes are sent
+        if let Err(err) = stream.flush() {
+            error!("{}", err.to_string());
+            return;
+        }
+
+        // Shutdown the write side so the client knows it's the end of data
+        if let Err(err) = stream.shutdown(std::net::Shutdown::Write) {
+            error!("{}", err.to_string());
         }
     }
     
