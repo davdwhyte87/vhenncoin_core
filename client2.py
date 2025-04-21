@@ -48,10 +48,24 @@ def sign_transaction(sender, receiver, amount, nonce, private_key):
     )
     return signature.hex()
 
+
+def sign_data(data:str, private_key):
+    tx_data = f"{data}"
+    print("🔏 tx_data to sign:", tx_data)
+    tx_hash = hashlib.sha256(data.encode()).digest()
+    print("🔐 tx_hash:", tx_hash.hex())
+    signature = private_key.sign_deterministic(
+        tx_hash,
+        hashfunc=hashlib.sha256,
+        sigencode=sigencode_string
+    )
+    return signature.hex()
+
 # ------------------ Payload Builders ------------------
 
 def build_wallet_payload(user: User):
     user.generate_keys_from_string()
+    
     return {
         "action": "create_wallet",
         "data": {
@@ -81,6 +95,20 @@ def build_transaction_payload(sender: User, receiver: str, amount: Decimal, nonc
             "receiver": receiver,
             "amount": amount_str,
             "nonce": nonce,
+            "signature": signature
+        }
+    }
+
+def build_verify_wallet_payload(user: User):
+    priv, _ = user.generate_keys_from_string()
+    print("public key", user.public_key)
+    data = "hello bolten boys"
+    signature = sign_data(data, priv)
+    return {
+        "action": "verify_wallet",
+        "data": {
+            "address": user.address,
+            "message": data,
             "signature": signature
         }
     }
@@ -131,7 +159,7 @@ def send_payload(payload):
     print("\n📦 Sending Payload:", payload)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((test_ip_address, port))
+        s.connect((local_ip_address, port))
         s.sendall(data)
         s.shutdown(socket.SHUT_WR)
 
@@ -159,7 +187,7 @@ if __name__ == "__main__":
 
     #send_payload(build_transaction_payload(user1, user2.address, Decimal("200.0"), "0"))
 
-    send_payload(build_get_account_payload(genesis_user))
+    #send_payload(build_get_account_payload(genesis_user))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())
@@ -167,3 +195,9 @@ if __name__ == "__main__":
     #send_payload(build_get_user_transactions_payload(genesis_user))
     #send_payload(build_get_all_blocks())
     #send_payload(build_hello_payload())
+
+    send_payload(build_verify_wallet_payload(user1))
+
+    # uud = User("greexy", "cuppythato", "berryhallen")
+    # priv, pub = uud.generate_keys_from_string()
+    # print("pub  key ",uud.public_key)

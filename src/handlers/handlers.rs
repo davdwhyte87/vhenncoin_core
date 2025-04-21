@@ -28,7 +28,7 @@ use crate::{models, APP_CONFIG};
 use crate::models::balance_pack::{BalanceCPack, BalancePack, WalletCPack};
 use crate::models::block::{Block, Chain, VBlock};
 use crate::models::db::MongoService;
-use crate::models::request::{AddNodeReq, CreateUserIDReq, CreateWalletReq, GetAccountReq, GetBalanceReq, GetUserTransactionsReq, GetWalletReq, TransferReq, ValidateUserIDReq};
+use crate::models::request::{AddNodeReq, CreateUserIDReq, CreateWalletReq, GetAccountReq, GetBalanceReq, GetUserTransactionsReq, GetWalletReq, TransferReq, ValidateUserIDReq, VerifyWalletReq};
 use crate::models::response::{GenericResponse, GetBalanceResponse, NResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::ServerData;
 use crate::models::user_id::UserID;
@@ -503,6 +503,51 @@ impl Handler {
         return;
     }
 
+    pub async fn verify_wallet(data:&String ,db:&Database, stream: &mut TcpStream) {
+        let request: VerifyWalletReq = match serde_json::from_str(data.as_str()) {
+            Ok(data) => { data },
+            Err(err) => {
+                error!("{}",err.to_string());
+                TCPResponse::send_response_x::<String>(NResponse {
+                    status: 0,
+                    message: "error decoding request".to_string(),
+                    data: None
+                }, stream);
+                return;
+            }
+        };
+        
+        let is_ok =match Wallet::verify_signature(db, request.message, request.address, request.signature).await{
+            Ok(d) => {
+                d
+            },
+            Err(err)=>{
+                error!("{}", err.to_string());
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "error verifying signature".to_string(),
+                    data:None
+                }, stream);
+                return;
+            }
+        };
+        
+        if(is_ok){
+            TCPResponse::send_response_x::<String>(NResponse{
+                status:1,
+                message: "Ok".to_string(),
+                data:None
+            }, stream);
+            return;
+        }else{
+            TCPResponse::send_response_x::<String>(NResponse{
+                status:0,
+                message: "invalid signature".to_string(),
+                data:None
+            }, stream);
+            return;
+        }
+    }
     pub async fn get_user_transactions(data:&String ,db:&Database, stream: &mut TcpStream){
 
         let request: GetUserTransactionsReq = match  serde_json::from_str(data.as_str()) {

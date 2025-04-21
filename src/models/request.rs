@@ -28,6 +28,13 @@ pub struct GetWalletReq {
     pub address: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct VerifyWalletReq {
+    pub address: String,
+    pub message: String,
+    pub signature: String,
+}
+
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateUserIDReq{
