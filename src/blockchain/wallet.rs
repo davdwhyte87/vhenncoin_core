@@ -3,7 +3,7 @@ use std::str::FromStr;
 use bigdecimal::BigDecimal;
 use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::ecdsa::signature::hazmat::PrehashVerifier;
-use k256::ecdsa::signature::Verifier;
+use k256::ecdsa::signature::{DigestVerifier, Verifier};
 use k256::elliptic_curve::weierstrass::add;
 use k256::EncodedPoint;
 use num_traits::Zero;
@@ -108,6 +108,8 @@ impl Wallet {
         let hash = Sha256::digest(transaction_data.as_bytes());
         log::debug!("tx_hash: {:x}", hash);
 
+        let mut digest = Sha256::new();
+        digest.update(message.as_bytes());
         let account = match Self::get_user_account(db, address.clone()).await{
             Ok(account)=>{account},
             Err(err)=>{return Err(err.into())}
@@ -136,7 +138,7 @@ impl Wallet {
 
         log::debug!("public_key: {}", pubk.clone());
      
-        let signature_bytes = match hex::decode(&signature_txt){
+        let signature_bytes = match hex::decode(signature_txt){
             Ok(signature_bytes)=>{signature_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
@@ -153,7 +155,7 @@ impl Wallet {
         }; // This is the correct way.
 
 
-        let is_valid = public_key.verify(&hash, &signature).is_ok();
+        let is_valid = public_key.verify_digest(digest, &signature).is_ok();
         log::debug!("is_valid: {}", is_valid);
         Ok(is_valid)
     }
