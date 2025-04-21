@@ -207,8 +207,8 @@ impl Node {
             "get_user_transactions"=>{
                 Handler::get_user_transactions(message_data, db, &mut stream).await;
             },
-            "GetZipChain"=>{
-                //Handler::get_chain_zip(&mut stream);
+            "verify_wallet"=>{
+               Handler::verify_wallet(message_data, db, &mut stream).await;
             },
             "CreateUserId"=>{
                 //Handler::create_user_id(message.clone(), &mut stream)

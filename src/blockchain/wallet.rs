@@ -4,6 +4,8 @@ use bigdecimal::BigDecimal;
 use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::ecdsa::signature::hazmat::PrehashVerifier;
 use k256::ecdsa::signature::Verifier;
+use k256::elliptic_curve::weierstrass::add;
+use k256::EncodedPoint;
 use num_traits::Zero;
 use redb::Database;
 use sha2::{Digest, Sha256};
@@ -75,6 +77,66 @@ impl Wallet {
         log::debug!("public_key: {}", pubk.clone());
         log::debug!("signature : {}", transaction.signature.clone());
         let signature_bytes = match hex::decode(&transaction.signature){
+            Ok(signature_bytes)=>{signature_bytes},
+            Err(err)=>{
+                log::error!("{:?}", err);
+                return Err(err.into())
+            }
+        };
+        log::debug!("Signature bytes: {:?}", &signature_bytes);
+        let signature = match Signature::from_slice(&signature_bytes){
+            Ok(signature)=>{signature},
+            Err(err)=>{
+                log::error!("{}", err.to_string());
+                return Err(err.into())
+            }
+        }; // This is the correct way.
+
+
+        let is_valid = public_key.verify(&hash, &signature).is_ok();
+        log::debug!("is_valid: {}", is_valid);
+        Ok(is_valid)
+    }
+
+
+    pub async fn verify_signature(db:&Database, message:String, address:String, signature_txt:String)-> Result<bool, Box<dyn std::error::Error>>{
+        let transaction_data = format!(
+            "{}", // Concatenate relevant fields for the transaction
+            message
+        );
+        log::debug!("transaction_data: {}", transaction_data);
+        let hash = Sha256::digest(transaction_data.as_bytes());
+        log::debug!("tx_hash: {:x}", hash);
+
+        let account = match Self::get_user_account(db, address.clone()).await{
+            Ok(account)=>{account},
+            Err(err)=>{return Err(err.into())}
+        };
+
+        let pubk = &account.unwrap_or_default().public_key;
+        let public_key_bytes =match hex::decode(pubk.clone()){
+            Ok(public_key_bytes)=>{public_key_bytes},
+            Err(err)=>{
+                log::error!("{:?}", err);
+                return Err(err.into())
+            }
+        };
+
+        log::debug!("Public key from DB: {}", pubk);
+        log::debug!("Public key bytes: {:?}", public_key_bytes);
+        log::debug!("Length: {}", public_key_bytes.len());
+
+        let public_key = match VerifyingKey::from_sec1_bytes(&public_key_bytes){
+            Ok(public_key)=>{public_key},
+            Err(err)=>{
+                log::error!("{:?}", err);
+                return Err(err.into())
+            }
+        };
+
+        log::debug!("public_key: {}", pubk.clone());
+     
+        let signature_bytes = match hex::decode(&signature_txt){
             Ok(signature_bytes)=>{signature_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
