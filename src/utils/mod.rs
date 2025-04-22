@@ -9,3 +9,4 @@ pub mod utils;
 pub mod test;
 pub mod formatter;
 pub mod constants;
+mod app_error;

@@ -102,7 +102,7 @@ def build_transaction_payload(sender: User, receiver: str, amount: Decimal, nonc
 def build_verify_wallet_payload(user: User):
     priv, _ = user.generate_keys_from_string()
     print("public key", user.public_key)
-    data = "wendy williams"
+    data = "hello benny"
     signature = sign_data(data, priv)
     return {
         "action": "verify_wallet",
@@ -185,18 +185,18 @@ if __name__ == "__main__":
 
     #send_payload(build_wallet_payload(genesis_user))
 
-    #send_payload(build_transaction_payload(genesis_user, user2.address, Decimal("200.0"), "0"))
+    #send_payload(build_transaction_payload(user1, user2.address, Decimal("200.0"), "0"))
 
     #send_payload(build_get_account_payload(genesis_user))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())
     #send_payload(build_getlast_block())
-    #send_payload(build_get_user_transactions_payload(genesis_user))
+    #send_payload(build_get_user_transactions_payload(user1))
     #send_payload(build_get_all_blocks())
     #send_payload(build_hello_payload())
 
-    send_payload(build_verify_wallet_payload(genesis_user))
+    send_payload(build_verify_wallet_payload(user1))
 
     # uud = User("greexy", "cuppythato", "berryhallen")
     # priv, pub = uud.generate_keys_from_string()

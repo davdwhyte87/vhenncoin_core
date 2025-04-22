@@ -517,6 +517,31 @@ impl Handler {
             }
         };
         
+        // check if wallet exists 
+        let account = match Wallet::get_user_account(db,request.address.to_owned()).await{
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}",err.to_string());
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "error getting wallet data".to_string(),
+                    data:None
+                }, stream);
+                return;
+            }
+        };
+        match account{
+            Some(account)=>{},
+            None=>{
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "Wallet does not exist".to_string(),
+                    data:None
+                }, stream);
+                return;
+            }
+        }
+        
         let is_ok =match Wallet::verify_signature(db, request.message, request.address, request.signature).await{
             Ok(d) => {
                 d
