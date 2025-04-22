@@ -47,7 +47,8 @@ impl Wallet {
         log::debug!("transaction_data: {}", transaction_data);
         let hash = Sha256::digest(transaction_data.as_bytes());
         log::debug!("tx_hash: {:x}", hash);
-
+        let mut digest = Sha256::new();
+        digest.update(transaction_data.as_bytes());
         let account = match Self::get_user_account(db,transaction.sender.clone()).await{
             Ok(account)=>{account},
             Err(err)=>{return Err(err.into())}
@@ -93,7 +94,7 @@ impl Wallet {
         }; // This is the correct way.
 
 
-        let is_valid = public_key.verify(&hash, &signature).is_ok();
+        let is_valid = public_key.verify_digest(digest, &signature).is_ok();
         log::debug!("is_valid: {}", is_valid);
         Ok(is_valid)
     }
