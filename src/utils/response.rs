@@ -1,8 +1,9 @@
 use std::io::Write;
-use std::net::TcpStream;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
+use tokio::io::AsyncWriteExt;
+use tokio::net::TcpStream;
 use crate::models::response::NResponse;
 
 pub struct Response {
@@ -32,7 +33,7 @@ pub struct TCPResponse {
 
 impl TCPResponse {
     // this function handles sending of messages back to the ip making the request using the given stream
-    pub fn send_response<T:Serialize>(response:&T, stream: &mut TcpStream){
+    pub async  fn send_response<T:Serialize>(response:&T, stream: &mut TcpStream){
         let resp_string:String = match serde_json::to_string(response){
             Ok(str)=>{str},
             Err(r)=>{
@@ -41,18 +42,18 @@ impl TCPResponse {
             }
         };
 
-        match stream.write(resp_string.as_bytes()){
+        match stream.write(resp_string.as_bytes()).await{
             Ok(_)=>{},
             Err(err)=>{
                 error!("{}",err.to_string());
             }
         }
 
-        stream.flush().unwrap();
+        stream.flush().await.unwrap();
     }
 
-    pub fn send_response_txt(response:String, stream: &mut TcpStream){
-        match stream.write(response.as_bytes()){
+    pub async fn send_response_txt(response:String, stream: &mut TcpStream){
+        match stream.write(response.as_bytes()).await{
             Ok(_)=>{},
             Err(err)=>{
                 error!("{}", err.to_string())
@@ -60,10 +61,16 @@ impl TCPResponse {
         }
     }
 
-    pub fn send_response_x<T>(response:NResponse<T>, stream: &mut TcpStream) where T: Serialize{
-        let mut resp_string = serde_json::to_string(&response).unwrap();
+    pub async fn send_response_x<T>(response:NResponse<T>, stream: &mut TcpStream) where T: Serialize{
+        let mut resp_string = match serde_json::to_string(&response){
+            Ok(str)=>str,
+            Err(err)=>{
+                error!("{}", err);
+                return;
+            }
+        };
         resp_string.push('\n');
-        match stream.write_all(resp_string.as_bytes()){
+        match stream.write_all(resp_string.as_bytes()).await{
             Ok(_)=>{},
             Err(err)=>{
                 error!("{}", err.to_string())
@@ -71,13 +78,13 @@ impl TCPResponse {
         }
 
         // Flush to ensure all bytes are sent
-        if let Err(err) = stream.flush() {
+        if let Err(err) = stream.flush().await {
             error!("{}", err.to_string());
             return;
         }
 
         // Shutdown the write side so the client knows it's the end of data
-        if let Err(err) = stream.shutdown(std::net::Shutdown::Write) {
+        if let Err(err) = stream.shutdown().await {
             error!("{}", err.to_string());
         }
     }

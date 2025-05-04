@@ -1,7 +1,7 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::error::Error;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use base64::Engine;
 use bigdecimal::BigDecimal;
 use sha2::{Digest, Sha256};
@@ -30,12 +30,13 @@ use rsa::pkcs8::spki::Error::AlgorithmParametersMissing;
 use rsa::traits::SignatureScheme;
 use serde_json::to_string;
 use sha256::digest;
+use sled::Db;
 use crate::blockchain::chain::{ChainX};
 use crate::blockchain::kv_service::KVService;
 use crate::blockchain::kv_store::KvStore;
 use crate::blockchain::mongo_store::WalletService;
 use crate::models::constants::{BLOCKS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
-use crate::models::db::MongoService;
+use crate::models::db::{MongoService, DB};
 use crate::models::mempool::Mempool;
 use crate::models::request::TransferReq;
 use crate::models::transaction::Transaction;
@@ -46,6 +47,9 @@ pub struct Transfer {
 
 }
 use thiserror::Error;
+use tokio::sync::Mutex;
+use crate::blockchain::kv_service2::KVService2;
+use crate::utils::app_error::AppError;
 use crate::utils::struct_h::Struct_H;
 
 #[derive(Error, Debug)]
@@ -62,9 +66,9 @@ pub enum TransferError{
 
 impl Transfer {
 
-    pub async fn add_to_mempool(db:&Database, mempool: Arc<Mutex<Mempool>>,  tx: Transaction)->Result<(), TransferError>{
+    pub async fn add_to_mempool(db:&Db, mempool: Arc<Mutex<Mempool>>,  tx: Transaction)->Result<(), TransferError>{
         
-        let mut  pool = mempool.lock().unwrap();
+        let mut  pool = mempool.lock().await;
         let pending_tx =pool.transactions.entry(tx.sender.clone()).or_insert_with(Vec::new);
 
         // Check if this sender already has a transaction with the same nonce
@@ -77,7 +81,7 @@ impl Transfer {
     }
 
     pub async fn get_all_transactions(mempool: Arc<Mutex<Mempool>>) -> Vec<Transaction> {
-        let pool = mempool.lock().unwrap(); // Lock temporarily
+        let pool = mempool.lock().await; // Lock temporarily
 
         let mut all_tx = Vec::new();
 
@@ -88,7 +92,7 @@ impl Transfer {
         all_tx
     }
     // check all transactions from mem pool and do credits and debits
-    pub async fn process_transactions(db:&Database, mempool: Arc<Mutex<Mempool>>, transactions:Vec< Transaction>) -> Result<(), Box<dyn Error>> {
+    pub async fn process_transactions(db:&Db, mempool: Arc<Mutex<Mempool>>, transactions:Vec< Transaction>) -> Result<(), AppError> {
         let mut processed_tx: Vec<Transaction> = vec![];
         if transactions.len() == 0 {
             log::debug!("Transactions empty ...");
@@ -114,7 +118,7 @@ impl Transfer {
                     receiver_account.address.clone(), tx.amount.clone()
                 );
                 // remove transaction from mempool
-                let mut pool = mempool.lock().unwrap();
+                let mut pool = mempool.lock().await;
                 Self::remove_from_mempool(&mut pool, &tx);
                 continue;
             }
@@ -147,7 +151,7 @@ impl Transfer {
 
             processed_tx.push(tx.clone());
             // Remove the transaction from the mempool after processing it
-            let mut pool = mempool.lock().unwrap();
+            let mut pool = mempool.lock().await;
             Self::remove_from_mempool(&mut pool, &tx);
         }
         
@@ -159,7 +163,7 @@ impl Transfer {
         // save block
         let previous_block_height = Wallet::get_last_block_height(db).await?;
         // get last block
-        let last_block:Option<VBlock> = KVService::get_data::<VBlock>(db, BLOCKS_TABLE, previous_block_height.to_string().as_str() )?;
+        let last_block:Option<VBlock> = KVService2::get_data::<VBlock>(db, BLOCKS_TABLE, previous_block_height.to_string().as_str() ).await?;
         
         let mut prev_hash:String;
         if last_block.is_some() {
@@ -177,8 +181,9 @@ impl Transfer {
         let hash = ChainX::calculate_block_hash(&new_block)?;
         new_block.hash = hash.clone();
         // save new block
-        KVService::save(db,BLOCKS_TABLE, (previous_block_height+1).to_string(), to_string(&new_block)?)?;
-        KVService::save(db, META_DATA_TABLE, "latest_height".to_string(), (previous_block_height+1).to_string()  )?;
+    
+        KVService2::save(db,BLOCKS_TABLE, &(previous_block_height+1).to_string(), &new_block ).await?;
+        KVService2::save(db, META_DATA_TABLE, "latest_height", &(previous_block_height+1)  ).await?;
         
         
         // store transaction logs
@@ -194,33 +199,33 @@ impl Transfer {
         Ok(())
     }
     
-    pub async fn save_transactions_logs(db:&Database, transaction:Transaction)->Result<(), Box<dyn Error>> {
+    pub async fn save_transactions_logs(db:&Db, transaction:Transaction)->Result<(), AppError> {
         // get the sender and receiver logs
-        let sender_log =  KVService::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE,transaction.sender.as_str() )?;
-        let receiver_log =  KVService::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE,transaction.receiver.as_str() )?;
+        let sender_log =  KVService2::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE,transaction.sender.as_str() ).await?;
+        let receiver_log =  KVService2::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE,transaction.receiver.as_str() ).await?;
         match sender_log {
             Some(mut sender_log) => {
                 sender_log.push(transaction.clone());
-                let log_string = Struct_H::vec_to_string::<Transaction>(sender_log);
-                KVService::save(db, TRANSACTIONS_LOG_TABLE, transaction.sender.clone(),log_string )?;
+               
+                KVService2::save(db, TRANSACTIONS_LOG_TABLE, &transaction.sender.clone(),&sender_log ).await?;
             }
             None=>{
                 let _log = vec![transaction.clone()]; 
-                let log_string = Struct_H::vec_to_string::<Transaction>(_log);
-                KVService::save(db, TRANSACTIONS_LOG_TABLE, transaction.sender.clone(),log_string )?;  
+                
+                KVService2::save(db, TRANSACTIONS_LOG_TABLE, &transaction.sender.clone(),&_log ).await?;  
             }
         }
 
         match receiver_log {
             Some(mut receiver_log) => {
                 receiver_log.push(transaction.clone());
-                let log_string = Struct_H::vec_to_string::<Transaction>(receiver_log);
-                KVService::save(db, TRANSACTIONS_LOG_TABLE, transaction.receiver,log_string )?;
+               
+                KVService2::save(db, TRANSACTIONS_LOG_TABLE, &transaction.receiver,&receiver_log ).await?;
             }
             None=>{
                 let _log = vec![transaction.clone()];
-                let log_string = Struct_H::vec_to_string::<Transaction>(_log);
-                KVService::save(db, TRANSACTIONS_LOG_TABLE, transaction.receiver,log_string )?;
+            
+                KVService2::save(db, TRANSACTIONS_LOG_TABLE, &transaction.receiver,&_log ).await?;
             }
         }
       Ok(())  

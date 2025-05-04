@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::str::FromStr;
+use actix_web::App;
 use bigdecimal::BigDecimal;
 use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::ecdsa::signature::hazmat::PrehashVerifier;
@@ -9,12 +10,15 @@ use k256::EncodedPoint;
 use num_traits::Zero;
 use redb::Database;
 use sha2::{Digest, Sha256};
+use sled::Db;
 use uuid::Uuid;
+use crate::blockchain::kv_service2::KVService2;
 use crate::blockchain::kv_service::KVService;
 use crate::models::account::Account;
 use crate::models::constants::{ACCOUNTS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
 use crate::models::request::{CreateWalletReq, TransferReq};
 use crate::models::transaction::Transaction;
+use crate::utils::app_error::AppError;
 use crate::utils::struct_h::Struct_H;
 use crate::utils::time::get_date_time;
 
@@ -35,7 +39,7 @@ impl Wallet {
         let verify_key = signing_key.verifying_key();
         hex::encode(verify_key.to_encoded_point(true).as_bytes())
     }
-    pub async fn verify_transaction_signature(db:&Database, transaction:TransferReq)-> Result<bool, Box<dyn std::error::Error>>{
+    pub async fn verify_transaction_signature(db:&Db, transaction:TransferReq)-> Result<bool, AppError>{
         log::debug!("amount {}",transaction.amount.to_string().clone());
         let transaction_data = format!(
         "{}{}{}{}", // Concatenate relevant fields for the transaction
@@ -59,7 +63,7 @@ impl Wallet {
             Ok(public_key_bytes)=>{public_key_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::HexDecodeError(err.to_string()))
             }
         };
 
@@ -71,7 +75,7 @@ impl Wallet {
             Ok(public_key)=>{public_key},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::VerifyKeyError(err.to_string()))
             }
         };
 
@@ -81,7 +85,7 @@ impl Wallet {
             Ok(signature_bytes)=>{signature_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::HexDecodeError(err.to_string()))
             }
         };
         log::debug!("Signature bytes: {:?}", &signature_bytes);
@@ -89,18 +93,17 @@ impl Wallet {
             Ok(signature)=>{signature},
             Err(err)=>{
                 log::error!("{}", err.to_string());
-                return Err(err.into())
+                return Err(AppError::SignatureError(err.to_string()))
             }
-        }; // This is the correct way.
-
-
+        }; 
+        
         let is_valid = public_key.verify_digest(digest, &signature).is_ok();
         log::debug!("is_valid: {}", is_valid);
         Ok(is_valid)
     }
 
 
-    pub async fn verify_signature(db:&Database, message:String, address:String, signature_txt:String)-> Result<bool, Box<dyn std::error::Error>>{
+    pub async fn verify_signature(db:&Db, message:String, address:String, signature_txt:String)-> Result<bool, AppError>{
         let transaction_data = format!(
             "{}", // Concatenate relevant fields for the transaction
             message
@@ -121,7 +124,7 @@ impl Wallet {
             Ok(public_key_bytes)=>{public_key_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::HexDecodeError(err.to_string()))
             }
         };
 
@@ -133,7 +136,7 @@ impl Wallet {
             Ok(public_key)=>{public_key},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::VerifyKeyError(err.to_string()))
             }
         };
 
@@ -143,7 +146,7 @@ impl Wallet {
             Ok(signature_bytes)=>{signature_bytes},
             Err(err)=>{
                 log::error!("{:?}", err);
-                return Err(err.into())
+                return Err(AppError::HexDecodeError(err.to_string()))
             }
         };
         log::debug!("Signature bytes: {:?}", &signature_bytes);
@@ -151,7 +154,7 @@ impl Wallet {
             Ok(signature)=>{signature},
             Err(err)=>{
                 log::error!("{}", err.to_string());
-                return Err(err.into())
+                return Err(AppError::SignatureError(err.to_string()))
             }
         }; // This is the correct way.
 
@@ -162,7 +165,7 @@ impl Wallet {
     }
 
     // verify sender has enough funds
-    pub async fn verify_transaction_amount(db:&Database, transaction:&Transaction)-> Result<bool, Box<dyn std::error::Error>>{
+    pub async fn verify_transaction_amount(db:&Db, transaction:&Transaction)-> Result<bool, AppError>{
 
         let account = match Self::get_user_account(db,transaction.sender.clone()).await{
             Ok(account)=>{account},
@@ -195,26 +198,26 @@ impl Wallet {
     // pub async fn is_account_exists(address:String)->Result<bool, Box<dyn Error>>{
     //
     // }
-    pub async fn get_user_account(db:&Database,address:String)->Result<Option<Account>, Box<dyn Error>>{
-        let data:Option<Account> = KVService::get_data::<Account>(db, ACCOUNTS_TABLE, &*address)?;
+    pub async fn get_user_account(db:&Db,address:String)->Result<Option<Account>,AppError>{
+        let data:Option<Account> = KVService2::get_data::<Account>(db, ACCOUNTS_TABLE, &*address).await?;
         Ok(data)
     }
 
 
-    pub async fn update_user_account(db:&Database, account: Account)-> Result<(), Box<dyn Error>>{
-        let account_string = Struct_H::struct_to_string2(&account)?;
+    pub async fn update_user_account(db:&Db, account: Account)-> Result<(), AppError>{
+        
         // update senders wallet
-        KVService::save(db, ACCOUNTS_TABLE, account.address, account_string)?;
+        KVService2::save(db, ACCOUNTS_TABLE, &*account.address, &account).await?;
         Ok(())
     }
 
-    pub async fn get_last_block_height(db:&Database)->Result<u64, Box<dyn std::error::Error>>{
-      let latest_height = KVService::get_data::<u64>(db, META_DATA_TABLE, "latest_height")?;
+    pub async fn get_last_block_height(db:&Db)->Result<u64, AppError>{
+      let latest_height = KVService2::get_data::<u64>(db, META_DATA_TABLE, "latest_height").await?;
         Ok(latest_height.unwrap_or_default())
     }
 
-    pub async fn get_user_transactions_log(db:&Database, address:&str)->Result<Vec<Transaction>, Box<dyn std::error::Error>>{
-        let transactions = KVService::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE, address)?;
+    pub async fn get_user_transactions_log(db:&Db, address:&str)->Result<Vec<Transaction>,AppError>{
+        let transactions = KVService2::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE, address).await?;
         match transactions{
             Some(transactions)=>{
                 Ok(transactions)
@@ -235,7 +238,7 @@ impl Wallet {
 
 
     // create wallet with rocks db kv store
-    pub async fn create_wallet_r(db:&Database, req:CreateWalletReq)->Result<(), Box<dyn Error>>{
+    pub async fn create_wallet_r(db:&Db, req:CreateWalletReq)->Result<(), AppError>{
 
         let mut balance:BigDecimal = BigDecimal::zero();
         // for genesis wallets
@@ -244,7 +247,7 @@ impl Wallet {
                 Ok(data)=>{data},
                 Err(err)=>{
                     log::error!("error creating genesis balance {}", err.to_string());
-                    return Err(err.into())
+                    return Err(AppError::BigDecimalConversionError(err.to_string()))
                 }
             };
         }
@@ -257,15 +260,8 @@ impl Wallet {
             created_at: get_date_time(),
             public_key: req.public_key,
         };
-
-        let account_string = match Struct_H::struct_to_string2(&account.clone()){
-            Ok(str)=>str,
-            Err(err)=>{
-                log::error!("error getting account struct string {}", err.to_string());
-                return Err(err.into())
-            }
-        };
-        KVService::save(db, ACCOUNTS_TABLE, account.address, account_string)?;
+        
+        KVService2::save(db, ACCOUNTS_TABLE, &account.address, &account).await?;
         return Ok(())
     }
 }

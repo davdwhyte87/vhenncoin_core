@@ -183,11 +183,11 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(genesis_user))
+    #send_payload(build_wallet_payload(user2))
 
-    #send_payload(build_transaction_payload(user1, user2.address, Decimal("200.0"), "0"))
+    #send_payload(build_transaction_payload(genesis_user, user1.address, Decimal("2000000.0"), "0"))
 
-    #send_payload(build_get_account_payload(genesis_user))
+    #send_payload(build_get_account_payload(user1))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     #send_payload(build_get_all_blocks())
     #send_payload(build_hello_payload())
 
-    send_payload(build_verify_wallet_payload(user1))
+    #send_payload(build_verify_wallet_payload(user1))
 
     # uud = User("greexy", "cuppythato", "berryhallen")
     # priv, pub = uud.generate_keys_from_string()

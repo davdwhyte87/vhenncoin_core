@@ -10,3 +10,4 @@ pub mod concensus;
 pub mod digital_id;
 pub mod kv_service;
 pub mod chain;
+pub mod kv_service2;

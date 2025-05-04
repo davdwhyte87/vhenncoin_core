@@ -49,11 +49,12 @@ use k256::ecdsa::signature::Verifier;
 use once_cell::sync::Lazy;
 use redb::{Database, TableDefinition};
 use sha2::{Digest, Sha256};
+
 use crate::handlers::handlers::Handler;
 use crate::models::constants::{ACCOUNTS_TABLE, BLOCKS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
 use crate::models::db::MongoService;
 use crate::models::request::HttpMessage;
-
+use crate::utils::app_error::AppError;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -70,18 +71,11 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 #[tokio::main]
 async fn main() {
-    // test_dd();
-   // utils::test::zip();
-//    match Wallet::seed_gen_keys("wet_whitej***"){
-//     Ok(_)=>{},
-//     Err(err)=>{println!("{}", err.to_string())}
-//    }
-
-//    return;
     env::set_var("RUST_BACKTRACE", "full");
-
+    //
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     info!("Starting server..");
+
 
     dotenv::dotenv().ok();
 
@@ -90,58 +84,36 @@ async fn main() {
         return ;
     }
 
-    match Node::setup_digital_id_folders(){
-        Ok(_)=>{},
-        Err(err)=>{
-            error!("error setting up id folders{}", err.to_string());
-            //panic!()
-            return;
-        }
-    }
-
-    // match Node::discover_c() {
-    //     Ok(_)=>{},
-    //     Err(err)=>{
-    //         debug!("{}", err.to_string());
-    //     }
-    // }
-    // match Node::notifiy_network_new_node(){
-    //     Ok(_)=>{}, 
-    //     Err(err)=>{
-    //         debug!("{}", err.to_string()); 
-    //     }
-    // }
     Node::serve().await;
 
 }
 
 
-fn create_database()->Result<Database, Box<dyn std::error::Error>>{
-    let path = format!("data/db.redb") ;
-    let db =match  Database::create(path){
-        Ok(data)=>{data},
-        Err(err)=>{
-            error!("error creating db {}", err.to_string());
-            return Err(err.into())
-        }
-    };
-
-    let METADATA: TableDefinition<&str, String> = TableDefinition::new(META_DATA_TABLE);
-    let BLOCKS: TableDefinition<&str, String> = TableDefinition::new(BLOCKS_TABLE);
-    let ACCOUNTS: TableDefinition<&str, String> = TableDefinition::new(ACCOUNTS_TABLE);
-    let TRANSACTIONS_LOG: TableDefinition<&str, String> = TableDefinition::new(TRANSACTIONS_LOG_TABLE);
-
-    let write_txn = db.begin_write()?;
-    {
-        write_txn.open_table(METADATA)?;
-        write_txn.open_table(BLOCKS)?;
-        write_txn.open_table(ACCOUNTS)?;
-        write_txn.open_table(TRANSACTIONS_LOG)?;
-    }
-    write_txn.commit()?;
-    
-    Ok(db)
-}
+// fn create_database()->Result<Database, AppError>{
+//     let path = format!("data/db.redb") ;
+//     let db =match  Database::create(path){
+//         Ok(data)=>{data},
+//         Err(err)=>{
+//             error!("error creating db {}", err.to_string());
+//             return Err(AppError::CreateDatabaseError)
+//         }
+//     };
+//
+//     let METADATA: TableDefinition<&str, String> = TableDefinition::new(META_DATA_TABLE);
+//     let BLOCKS: TableDefinition<&str, String> = TableDefinition::new(BLOCKS_TABLE);
+//     let ACCOUNTS: TableDefinition<&str, String> = TableDefinition::new(ACCOUNTS_TABLE);
+//     let TRANSACTIONS_LOG: TableDefinition<&str, String> = TableDefinition::new(TRANSACTIONS_LOG_TABLE);
+//
+//     let write_txn = db.begin_write().map_err(|_|AppError::UnexpectedError)?;
+//     {
+//         write_txn.open_table(METADATA).map_err(|_|AppError::OpenTableError)?;
+//         write_txn.open_table(BLOCKS).map_err(|_|AppError::OpenTableError)?;
+//         write_txn.open_table(ACCOUNTS).map_err(|_|AppError::OpenTableError)?;
+//         write_txn.open_table(TRANSACTIONS_LOG).map_err(|_|AppError::OpenTableError)?;
+//     }
+//     write_txn.commit().map_err(|_|AppError::UnexpectedError);
+//     Ok(db)
+// }
 
 pub struct AppConfig {
     pub port: u16,
