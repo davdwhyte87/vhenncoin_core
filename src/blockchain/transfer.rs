@@ -8,7 +8,7 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::blockchain::wallet::{Wallet};
-use crate::models::block::{Block, VBlock};
+use crate::models::block::{Block, TBlock, VBlock};
 use crate::utils::time::get_date_time;
 use crate::utils::utils::{MyError, MyErrorTypes};
 use base64::engine::general_purpose;
@@ -66,19 +66,6 @@ pub enum TransferError{
 
 impl Transfer {
 
-    pub async fn add_to_mempool(db:&Db, mempool: Arc<Mutex<Mempool>>,  tx: Transaction)->Result<(), TransferError>{
-        
-        let mut  pool = mempool.lock().await;
-        let pending_tx =pool.transactions.entry(tx.sender.clone()).or_insert_with(Vec::new);
-
-        // Check if this sender already has a transaction with the same nonce
-        if pending_tx.iter().any(|t| t.nonce == tx.nonce) {
-            return Err(TransferError::TransactionExistsInMempool);
-        }
-        pending_tx.push(tx);
-        log::debug!("Current state of mempool: {:?}", pool.transactions);
-        return Ok(());
-    }
 
     pub async fn get_all_transactions(mempool: Arc<Mutex<Mempool>>) -> Vec<Transaction> {
         let pool = mempool.lock().await; // Lock temporarily
@@ -91,114 +78,86 @@ impl Transfer {
 
         all_tx
     }
-    // check all transactions from mem pool and do credits and debits
-    pub async fn process_transactions(db:&Db, mempool: Arc<Mutex<Mempool>>, transactions:Vec< Transaction>) -> Result<(), AppError> {
-        let mut processed_tx: Vec<Transaction> = vec![];
-        if transactions.len() == 0 {
-            log::debug!("Transactions empty ...");
-            return Ok(());
-        }
-        for tx in transactions {
-            log::debug!("processing transaction {} -- {}", tx.sender.clone(), tx.receiver.clone());
-            // get sender/ reciever account
-            let mut sender_account =match  Wallet::get_user_account(db,tx.sender.clone()).await?{
-                Some(account) => account,
-                None=>{ continue }
-            };
+    
+    pub async fn process_single_bf_transaction(db:&Db, tx:Transaction)->Result<(), AppError>{
+        // check if the accounts exist 
+        let mut sender_account =match  Wallet::get_user_account(db,tx.sender.clone()).await?{
+            Some(account) => account,
+            None=>{ 
+                return Err(AppError::AccountNotFound(tx.sender.clone()))
+            }
+        };
 
-            let mut receiver_account =match  Wallet::get_user_account(db,tx.receiver.clone()).await?{
-                Some(account) => account,
-                None=>{ continue }
-            };
-
-            // verify transaction amount
-            let is_valid_amount =Wallet::verify_transaction_amount(db, &tx).await?;
-            if !is_valid_amount {
-                log::debug!("bad transaction amount {} - {} {}", sender_account.address.clone(),
+        let mut receiver_account =match  Wallet::get_user_account(db,tx.receiver.clone()).await?{
+            Some(account) => account,
+            None=>{
+                return Err(AppError::AccountNotFound(tx.receiver.clone()))
+            }
+        }; 
+        
+        // verify the sender balance 
+        let is_valid_amount =Wallet::verify_transaction_amount(db, &tx).await?;
+        if !is_valid_amount {
+            log::debug!("bad transaction amount {} - {} {}", sender_account.address.clone(),
                     receiver_account.address.clone(), tx.amount.clone()
                 );
-                // remove transaction from mempool
-                let mut pool = mempool.lock().await;
-                Self::remove_from_mempool(&mut pool, &tx);
-                continue;
-            }
-
-
-            // update accounts
-            sender_account.balance = sender_account.balance - tx.amount.clone();
-            if tx.nonce != sender_account.nonce {
-                continue
-            }
-            sender_account.nonce = sender_account.nonce + 1;
-
-            receiver_account.balance = receiver_account.balance + tx.amount.clone();
-            
-
-            match Wallet::update_user_account(db,sender_account).await{
-                Ok(_) => {}
-                Err(e)=>{
-                    log::error!("Error updating user account : {}", e);
-                    continue
-                }
-            };
-            match Wallet::update_user_account(db, receiver_account).await{
-                Ok(_) => {}
-                Err(e)=>{
-                    log::error!("Error updating user account : {}", e);
-                    continue
-                } 
-            };
-
-            processed_tx.push(tx.clone());
-            // Remove the transaction from the mempool after processing it
-            let mut pool = mempool.lock().await;
-            Self::remove_from_mempool(&mut pool, &tx);
+            return Err(AppError::InsufficientFunds);
         }
-        
-        // prevent block creation when there are no successful transactions
-        if(processed_tx.len() == 0) {
-            return Ok(());
-        }
-        
-        // save block
-        let previous_block_height = Wallet::get_last_block_height(db).await?;
-        // get last block
-        let last_block:Option<VBlock> = KVService2::get_data::<VBlock>(db, BLOCKS_TABLE, previous_block_height.to_string().as_str() ).await?;
-        
-        let mut prev_hash:String;
-        if last_block.is_some() {
-            prev_hash = last_block.unwrap().hash.clone();
-        }else{
-            prev_hash = "000000000".to_string();
-        }
-        let mut new_block = VBlock{
-            previous_hash: prev_hash,
-            transactions: processed_tx.clone(),
-            timestamp: Utc::now().timestamp(),
-            hash: "".to_string(),
-            block_height: previous_block_height+1,
+        //  create blocks
+        let block = TBlock{
+            id: tx.id.clone(),
+            sender: tx.sender.clone(),
+            receiver: tx.receiver.clone(),
+            timestamp: tx.timestamp,
+            amount: tx.amount.clone(),
         };
-        let hash = ChainX::calculate_block_hash(&new_block)?;
-        new_block.hash = hash.clone();
-        // save new block
-    
-        KVService2::save(db,BLOCKS_TABLE, &(previous_block_height+1).to_string(), &new_block ).await?;
-        KVService2::save(db, META_DATA_TABLE, "latest_height", &(previous_block_height+1)  ).await?;
-        
-        
-        // store transaction logs
-        for tx in processed_tx{
-            match Self::save_transactions_logs(db, tx).await{
-                Ok(_) => {}
-                Err(e)=>{
-                    log::error!("Error updating user account : {}", e);
-                    continue
-                }
-            };
+        // get tx id and check
+        let derived_tx_id = Self::get_transaction_hash(tx.clone());
+        if derived_tx_id != tx.id{
+            return Err(AppError::IDMismatch);
         }
+        // check if the tx exists
+        
+        for otx in sender_account.chain.clone(){
+            if otx.id == derived_tx_id{
+              return Err(AppError::TransactionAlreadyExists);  
+            }
+        }
+        
+        // add blocks
+        let mut sender_chain = sender_account.chain.clone();
+        sender_chain.push(block.clone());
+        sender_account.chain = sender_chain;
+        let mut receiver_chain = receiver_account.chain.clone();
+        receiver_chain.push(block.clone());
+        receiver_account.chain = receiver_chain;
+      
+        match KVService2::save_block(db, tx.sender.as_str(), tx.receiver.as_str(), &sender_account, &receiver_account).await{
+            Ok(_)=>{},
+            Err(err)=>{
+                error!("Error while saving block: {}", err.to_string());
+                return Err(err)
+            }
+        };
+        
         Ok(())
     }
     
+    pub fn get_transaction_hash(tx:Transaction)->String{
+        let mut hasher = Sha256::new();
+
+        // Convert everything to bytes and hash
+        hasher.update(tx.timestamp.to_be_bytes());
+        hasher.update(tx.sender.as_bytes());
+        hasher.update(tx.receiver.as_bytes());
+        hasher.update(tx.amount.normalized().to_string().as_bytes());
+
+        // Finalize and convert to hex string
+        let result = hasher.finalize();
+        hex::encode(result)
+    }
+    // check all transactions from mem pool and do credits and debits
+
     pub async fn save_transactions_logs(db:&Db, transaction:Transaction)->Result<(), AppError> {
         // get the sender and receiver logs
         let sender_log =  KVService2::get_data::<Vec<Transaction>>(db, TRANSACTIONS_LOG_TABLE,transaction.sender.as_str() ).await?;
@@ -231,10 +190,10 @@ impl Transfer {
       Ok(())  
     }
 
-    pub fn remove_from_mempool(mempool: &mut Mempool, tx: &Transaction) {
-        if let Some(pending_tx) = mempool.transactions.get_mut(&tx.sender) {
-            // Remove the transaction by matching nonce or other unique identifiers
-            pending_tx.retain(|t| t.nonce != tx.nonce); // Remove the transaction with the same nonce
-        }
-    }
+    // pub fn remove_from_mempool(mempool: &mut Mempool, tx: &Transaction) {
+    //     if let Some(pending_tx) = mempool.transactions.get_mut(&tx.sender) {
+    //         // Remove the transaction by matching nonce or other unique identifiers
+    //         pending_tx.retain(|t| t.nonce != tx.nonce); // Remove the transaction with the same nonce
+    //     }
+    // }
 }
