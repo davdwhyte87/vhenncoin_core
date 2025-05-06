@@ -2,6 +2,7 @@ use std::error::Error;
 use std::str::FromStr;
 use actix_web::App;
 use bigdecimal::BigDecimal;
+use chrono::{Local, NaiveDateTime};
 use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::ecdsa::signature::hazmat::PrehashVerifier;
 use k256::ecdsa::signature::{DigestVerifier, Verifier};
@@ -14,7 +15,9 @@ use sled::Db;
 use uuid::Uuid;
 use crate::blockchain::kv_service2::KVService2;
 use crate::blockchain::kv_service::KVService;
+use crate::blockchain::transfer::Transfer;
 use crate::models::account::Account;
+use crate::models::block::TBlock;
 use crate::models::constants::{ACCOUNTS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
 use crate::models::request::{CreateWalletReq, TransferReq};
 use crate::models::transaction::Transaction;
@@ -42,17 +45,17 @@ impl Wallet {
     pub async fn verify_transaction_signature(db:&Db, transaction:TransferReq)-> Result<bool, AppError>{
         log::debug!("amount {}",transaction.amount.to_string().clone());
         let transaction_data = format!(
-        "{}{}{}{}", // Concatenate relevant fields for the transaction
-        transaction.sender,
-        transaction.receiver,
-        transaction.amount,
-        transaction.nonce
+        "{}{}{}{}{}",
+            transaction.sender,
+            transaction.receiver,
+            transaction.amount,
+            transaction.timestamp,
+            transaction.id
         );
-        log::debug!("transaction_data: {}", transaction_data);
-        let hash = Sha256::digest(transaction_data.as_bytes());
-        log::debug!("tx_hash: {:x}", hash);
-        let mut digest = Sha256::new();
-        digest.update(transaction_data.as_bytes());
+
+        let raw = transaction_data.as_bytes();
+        log::debug!("🦀 raw preimage hex: {}", hex::encode(raw));
+        
         let account = match Self::get_user_account(db,transaction.sender.clone()).await{
             Ok(account)=>{account},
             Err(err)=>{return Err(err.into())}
@@ -97,7 +100,7 @@ impl Wallet {
             }
         }; 
         
-        let is_valid = public_key.verify_digest(digest, &signature).is_ok();
+        let is_valid = public_key.verify(transaction_data.as_bytes(), &signature).is_ok();
         log::debug!("is_valid: {}", is_valid);
         Ok(is_valid)
     }
@@ -114,6 +117,7 @@ impl Wallet {
 
         let mut digest = Sha256::new();
         digest.update(message.as_bytes());
+        
         let account = match Self::get_user_account(db, address.clone()).await{
             Ok(account)=>{account},
             Err(err)=>{return Err(err.into())}
@@ -166,32 +170,36 @@ impl Wallet {
 
     // verify sender has enough funds
     pub async fn verify_transaction_amount(db:&Db, transaction:&Transaction)-> Result<bool, AppError>{
-
-        let account = match Self::get_user_account(db,transaction.sender.clone()).await{
-            Ok(account)=>{account},
-            Err(err)=>{return Err(err.into())}
-        };
-        let receiver_account = match Self::get_user_account(db,transaction.receiver.clone()).await{
-            Ok(account)=>{account},
-            Err(err)=>{return Err(err.into())}
-        };
-
-        if account.is_none() || receiver_account.is_none(){
-            return Ok(false)
-        }
+        let balance =Self::get_balance(db, transaction.sender.clone()).await?;
         // make sure user has enough coins
-        if transaction.amount > account.clone().unwrap_or_default().balance{
+        if transaction.amount > balance{
             return Ok(false)
-        }
-        // make sure nonce is correct
-        if transaction.nonce != account.unwrap_or_default().nonce{
-           return Ok(false)
         }
         Ok(true)
     }
     // add transaction to mem pool
-
-
+    
+    
+    pub async fn get_balance(db:&Db, sender:String)->Result<BigDecimal, AppError>{
+        let account = match Self::get_user_account(db,sender.clone()).await{
+            Ok(account)=>{account},
+            Err(err)=>{return Err(err.into())}
+        };
+        
+        if account.is_none(){
+            return Err(AppError::AccountNotFound(sender))
+        }
+        
+        // get chain 
+        let mut balance = BigDecimal::zero();
+        for tblock in account.unwrap_or_default().chain{
+            if tblock.receiver == sender{
+                balance = tblock.amount + balance; 
+            }
+        }
+        return Ok(balance);
+    }
+    
 
 
     // is account exists
@@ -241,6 +249,7 @@ impl Wallet {
     pub async fn create_wallet_r(db:&Db, req:CreateWalletReq)->Result<(), AppError>{
 
         let mut balance:BigDecimal = BigDecimal::zero();
+        let mut chain:Vec<TBlock> = vec![];
         // for genesis wallets
         if req.address == "genesis"{
             balance = match BigDecimal::from_str("99900000000000"){
@@ -250,17 +259,32 @@ impl Wallet {
                     return Err(AppError::BigDecimalConversionError(err.to_string()))
                 }
             };
+            let mut block = TBlock{
+                id: "".to_string(),
+                sender: "000000000".to_string(),
+                receiver: req.address.clone(),
+                timestamp: 0,
+                amount: balance.clone(),
+            };
+            let tx_id = Transfer::get_transaction_hash(Transaction{
+                id: "".to_string(),
+                sender: block.sender.clone(),
+                receiver: block.receiver.clone(),
+                amount: block.amount.clone(),
+                signature: "".to_string(),
+                timestamp: 0,
+            });
+            block.id = tx_id.clone();
+            chain.push(block);
         }
+        
         let account = Account{
             id: Uuid::new_v4().to_string(),
             address: req.address.clone(),
-            wallet_name: req.wallet_name.clone(),
-            nonce: 0,
-            balance,
-            created_at: get_date_time(),
+            chain: chain,
+            created_at: Local::now().naive_local(),
             public_key: req.public_key,
         };
-        
         KVService2::save(db, ACCOUNTS_TABLE, &account.address, &account).await?;
         return Ok(())
     }

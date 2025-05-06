@@ -17,7 +17,7 @@ actix-web-validator = "5.0.1"
 awc = "3.4.0"
 base64 = "0.21.2"
 bigdecimal = {version ="0.4.0", features = ["serde"] }
-chrono = "0.4.23"
+chrono = { version = "0.4.23", features = ["serde"] }
 dotenv = "0.15.0"
 env-file-reader = "0.3.0"
 env_logger = "0.11.5"

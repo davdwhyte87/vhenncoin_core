@@ -32,7 +32,7 @@ use crate::models::balance_pack::{BalanceCPack, BalancePack, WalletCPack};
 use crate::models::block::{Block, Chain, VBlock};
 use crate::models::db::MongoService;
 use crate::models::request::{AddNodeReq, CreateUserIDReq, CreateWalletReq, GetAccountReq, GetBalanceReq, GetUserTransactionsReq, GetWalletReq, TransferReq, ValidateUserIDReq, VerifyWalletReq};
-use crate::models::response::{GenericResponse, GetBalanceResponse, NResponse, WalletNamesResp, WalletNamesRespC};
+use crate::models::response::{GenericResponse, GetBalanceResp, GetBalanceResponse, NResponse, WalletNamesResp, WalletNamesRespC};
 use crate::models::server_list::ServerData;
 use crate::models::user_id::UserID;
 use crate::models::wallet::{MongoWallet, WalletC};
@@ -52,6 +52,7 @@ use crate::models::account::Account;
 use crate::models::constants::BLOCKS_TABLE;
 use crate::models::mempool::Mempool;
 use crate::models::transaction::Transaction;
+use crate::utils::app_error::AppError;
 
 pub struct Handler{
 
@@ -97,30 +98,27 @@ impl Handler {
           }
         };
           
-        let nonce:u64 = match u64::from_str(&*request.nonce.clone()){
-          Ok(nonce)=>{nonce},
-          Err(err)=>{
-              debug!("{}",err.to_string());
-              TCPResponse::send_response_x::<String>(NResponse{
-                  status:0,
-                  message: "invalid nonce".to_string(),
-                  data:None
-              }, stream).await;
-              return;
-          }
-        };
+          
           
           let tx = Transaction{
+              id:request.id.clone(),
               sender: request.sender.clone(),
               receiver: request.receiver.clone(),
               amount: amount.clone(),
-              nonce: nonce.clone(),
               signature: request.signature.clone(),
+              timestamp: request.timestamp.clone(),
           };
           
           match Wallet::verify_transaction_signature(db, request).await{
-              Ok(_) => {
-                  
+              Ok(is_ok) => {
+                  if !is_ok{
+                      TCPResponse::send_response_x::<String>(NResponse{
+                          status:0,
+                          message: "Error verifying transaction signature".to_string(),
+                          data:None
+                      }, stream).await;
+                      return;
+                  }
               },
               Err(err)=>{
                   error!("{}", err.to_string());
@@ -133,25 +131,51 @@ impl Handler {
               }
           }; 
           // prevent sending to same sender wallet
-          
+          match Transfer::process_single_bf_transaction(db, tx).await{
+              Ok(_)=>{},
+              Err(err)=>{
+                  error!("{}", err.to_string());
+                  let mut message = String::new();
+                  match err{
+                      AppError::InsufficientFunds =>{
+                        message = "insufficient funds!".to_string();  
+                      },
+                      AppError::IDMismatch=>{
+                          message = "Invalid transaction!".to_string();
+                      },
+                      AppError::TransactionAlreadyExists=>{
+                          message = "Transaction already exists!".to_string();
+                      }
+                      _=>{
+                         message = "Error transfering coin".to_string(); 
+                      }
+                  }
+                  TCPResponse::send_response_x::<String>(NResponse{
+                      status:0,
+                      message: message,
+                      data:None
+                  }, stream).await;
+                  return;
+              }
+          };
           
        
-        match Transfer::add_to_mempool(db,mempool, tx).await{
-            Ok(_)=>{},
-            Err(err)=>{
-                error!("{}", err.to_string());
-                TCPResponse::send_response_x::<String>(NResponse{
-                    status:0,
-                    message: err.to_string(),
-                    data:None
-                }, stream).await;
-                return;
-            }
-        };
+        // match Transfer::add_to_mempool(db,mempool, tx).await{
+        //     Ok(_)=>{},
+        //     Err(err)=>{
+        //         error!("{}", err.to_string());
+        //         TCPResponse::send_response_x::<String>(NResponse{
+        //             status:0,
+        //             message: err.to_string(),
+        //             data:None
+        //         }, stream).await;
+        //         return;
+        //     }
+        // };
 
           TCPResponse::send_response_x::<String>(NResponse{
               status:1,
-              message: "successfully submitted transaction".to_string(),
+              message: "Transaction successful".to_string(),
               data:None
           }, stream).await;
           return;
@@ -331,7 +355,47 @@ impl Handler {
             )
 
     }
-
+    pub async fn get_balance(db: &Db, message:&String, stream: &mut TcpStream) {
+        let request: GetBalanceReq = match serde_json::from_str(message.as_str()) {
+            Ok(data) => { data },
+            Err(err) => {
+                error!("{}",err.to_string());
+                TCPResponse::send_response_x::<GetBalanceResp>(NResponse {
+                    status: 0,
+                    message: "error decoding request".to_string(),
+                    data: None
+                }, stream).await;
+                return;
+            }
+        };
+        let mut  message = String::new();
+        let balance = match Wallet::get_balance(db, request.address.to_owned()).await{
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err.to_string());
+                match err {
+                    AppError::AccountNotFound(..) =>{message = "Account not found".to_string()},
+                    _=>{
+                        message = "Error getting balance".to_string();
+                    }
+                }
+                TCPResponse::send_response_x::<GetBalanceResp>(NResponse {
+                    status: 0,
+                    message,
+                    data: None
+                }, stream).await;
+                return;
+            }
+        };
+        
+        
+        TCPResponse::send_response_x::<GetBalanceResp>(NResponse {
+            status: 1,
+            message,
+            data: Some(GetBalanceResp{balance: balance, address:request.address.clone()})
+        }, stream).await;
+        return;
+    }
 
     pub async fn get_account(db: &Db, message:&String, stream: &mut TcpStream) {
       
@@ -530,13 +594,6 @@ impl Handler {
                     data:None
                 }, stream).await;
                 return;
-
-                    // broadcast and tell other servers about the newly created wallet
-                    // if is_broadcasted == "0" {
-                    //     debug!("broadcasting ...... ");
-                    //     broadcast_request_tcp("CreateWallet".to_string(),message.to_string());
-                    // }
-                    return;
             },
             Err(err)=>{
                 error!("{}", err.to_string());

@@ -5,9 +5,10 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub struct TransferReq {
     pub sender: String,
-    pub nonce:String,
+    pub amount:String,
     pub receiver: String,
-    pub amount: String,
+    pub id: String,
+    pub timestamp: u64,
     pub signature:String
 }
 
@@ -64,6 +65,8 @@ pub struct CreateWalletReq {
 pub struct GetAccountReq {
     pub address: String,
 }
+
+
 
 pub struct NRequest <T>{
     pub action:String, 

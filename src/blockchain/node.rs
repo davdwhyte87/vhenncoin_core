@@ -52,14 +52,14 @@ impl Node {
         let db = Arc::new(sled_db);
         
         // spawn miner
-        {
-            let db_clone     = db.clone();
-            let mempool_clone = mempool.clone();
-            tokio::spawn(async move {
-                // This will loop forever (or until you decide to shut it down)
-                Self::mine_blocks(&db_clone, mempool_clone).await;
-            });
-        }
+        // {
+        //     let db_clone     = db.clone();
+        //     let mempool_clone = mempool.clone();
+        //     tokio::spawn(async move {
+        //         // This will loop forever (or until you decide to shut it down)
+        //         Self::mine_blocks(&db_clone, mempool_clone).await;
+        //     });
+        // }
 
         loop {
             select! {
@@ -157,6 +157,10 @@ impl Node {
                 Handler::get_account(&db, message_data, &mut stream).await;
                 Ok(())
             },
+            "get_balance"=>{
+                Handler::get_balance(&db, message_data, &mut stream).await;
+                Ok(())
+            },
             "get_last_block_height"=>{ 
                 Handler::get_last_block_height(&db, &mut stream).await;
                 Ok(())
@@ -192,22 +196,22 @@ impl Node {
         }
     }
 
-    pub async fn mine_blocks(db:&Db, mempool: Arc<Mutex<Mempool>>) {
-       
-        let mut interval = time::interval(Duration::from_secs(30));
-        loop {
-            interval.tick().await;
-            log::info!("Minning new block ...............");
-            let transactions = Transfer::get_all_transactions(mempool.clone()).await;
-            match Transfer::process_transactions(db, mempool.clone(), transactions.clone()).await{
-                Ok(_) => {},
-                Err(err) => {
-                    log::error!("{}", err.to_string());
-                    continue;
-                }
-            };
-        }
-    }
+    // pub async fn mine_blocks(db:&Db, mempool: Arc<Mutex<Mempool>>) {
+    //    
+    //     let mut interval = time::interval(Duration::from_secs(30));
+    //     loop {
+    //         interval.tick().await;
+    //         log::info!("Minning new block ...............");
+    //         let transactions = Transfer::get_all_transactions(mempool.clone()).await;
+    //         match Transfer::process_transactions(db, mempool.clone(), transactions.clone()).await{
+    //             Ok(_) => {},
+    //             Err(err) => {
+    //                 log::error!("{}", err.to_string());
+    //                 continue;
+    //             }
+    //         };
+    //     }
+    // }
 
     // pub fn discover_c()->Result<(), Box<dyn Error>>{
     //     info!("Starting node discovery");

@@ -1,3 +1,4 @@
+use bigdecimal::BigDecimal;
 use serde_derive::{Deserialize, Serialize};
 
 use super::wallet::{MongoWallet, WalletC};
@@ -15,6 +16,12 @@ pub struct GetBalanceResponse {
     pub code:i32,
     pub balance: f32
 
+}
+
+#[derive(Serialize,Deserialize)]
+pub struct GetBalanceResp {
+    pub balance: BigDecimal,
+    pub address: String,
 }
 
 #[derive(Serialize,Deserialize)]

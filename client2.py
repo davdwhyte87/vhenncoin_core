@@ -4,7 +4,8 @@ import json
 import hashlib
 from bip_utils import Bip39SeedGenerator
 from ecdsa import SigningKey, SECP256k1
-from ecdsa.util import sigencode_string
+from ecdsa.util import sigencode_string, sigencode_string_canonize
+import time
 
 # ------------------ User Class ------------------
 
@@ -36,17 +37,26 @@ port = 3000
 
 # ------------------ Helpers ------------------
 
-def sign_transaction(sender, receiver, amount, nonce, private_key):
-    tx_data = f"{sender}{receiver}{amount}{nonce}"
+def sign_transaction(sender:str, receiver:str, amount:str, timestamp:int, id:str, private_key):
+    tx_data = f"{sender}{receiver}{amount}{timestamp}{id}"
     print("🔏 tx_data to sign:", tx_data)
-    tx_hash = hashlib.sha256(tx_data.encode()).digest()
-    print("🔐 tx_hash:", tx_hash.hex())
+    print("raw hex:", tx_data.encode('utf-8').hex())
     signature = private_key.sign_deterministic(
-        tx_hash,
+        tx_data.encode('utf-8'),
         hashfunc=hashlib.sha256,
-        sigencode=sigencode_string
+        sigencode=sigencode_string_canonize
     )
     return signature.hex()
+
+
+def get_tx_id(sender:str, receiver:str, amount:str, ts:int):
+    h = hashlib.sha256()
+    h.update(ts.to_bytes(8, byteorder="big", signed=True))
+    h.update(sender.encode("utf-8"))
+    h.update(receiver.encode("utf-8"))
+    h.update(amount.encode("utf-8"))
+
+    return h.hexdigest()
 
 
 def sign_data(data:str, private_key):
@@ -86,15 +96,18 @@ def build_get_user_transactions_payload(user: User):
 
 def build_transaction_payload(sender: User, receiver: str, amount: Decimal, nonce: str):
     priv, _ = sender.generate_keys_from_string()
-    amount_str = str(amount)
-    signature = sign_transaction(sender.address, receiver, amount_str, nonce, priv)
+    amount_str = format(amount.normalize(), 'f')
+    ts_seconds = int(time.time())
+    tx_id = get_tx_id(sender.address, receiver, amount_str, ts_seconds )
+    signature = sign_transaction(sender.address, receiver, amount_str, ts_seconds, tx_id, priv)
     return {
         "action": "transfer",
         "data": {
             "sender": sender.address,
             "receiver": receiver,
             "amount": amount_str,
-            "nonce": nonce,
+            "timestamp": ts_seconds,
+            "id":tx_id,
             "signature": signature
         }
     }
@@ -138,6 +151,16 @@ def build_get_account_payload(user: User):
             "address": user.address
         }
     }
+
+
+def get_balance_payload(user: User):
+    return {
+        "action": "get_balance",
+        "data": {
+            "address": user.address
+        }
+    }
+
 
 def build_mempool_payload():
     return {
@@ -183,11 +206,12 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(user2))
+    #send_payload(build_wallet_payload(user1))
 
-    #send_payload(build_transaction_payload(genesis_user, user1.address, Decimal("2000000.0"), "0"))
+    #send_payload(build_transaction_payload(genesis_user, user1.address, Decimal("5699.095"), "0"))
 
     #send_payload(build_get_account_payload(user1))
+    send_payload(get_balance_payload(user1))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())

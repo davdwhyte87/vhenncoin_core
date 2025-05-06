@@ -21,6 +21,7 @@ pub struct Block{
     pub trx_h:Option<String>
 }
 
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Chain{
     pub chain: Vec<Block>
@@ -29,11 +30,18 @@ pub struct Chain{
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct VBlock {
-
     pub previous_hash: String,
     pub transactions: Vec<Transaction>,
     pub timestamp: i64,
     pub hash: String,
     pub block_height: u64,
+}
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct TBlock{
+    pub id:String,
+    pub sender:String,
+    pub receiver:String,
+    pub timestamp:u64,
+    pub amount:BigDecimal,
 }
 
