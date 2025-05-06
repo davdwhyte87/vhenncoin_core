@@ -284,6 +284,7 @@ impl Wallet {
             chain: chain,
             created_at: Local::now().naive_local(),
             public_key: req.public_key,
+            balance:BigDecimal::zero(),
         };
         KVService2::save(db, ACCOUNTS_TABLE, &account.address, &account).await?;
         return Ok(())

@@ -206,12 +206,12 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(user1))
+    #send_payload(build_wallet_payload(genesis_user))
 
     #send_payload(build_transaction_payload(genesis_user, user1.address, Decimal("5699.095"), "0"))
 
-    #send_payload(build_get_account_payload(user1))
-    send_payload(get_balance_payload(user1))
+    send_payload(build_get_account_payload(user1))
+    #send_payload(get_balance_payload(user1))
     #send_payload(build_mempool_payload())
 
     #send_payload(build_getlast_block_height())

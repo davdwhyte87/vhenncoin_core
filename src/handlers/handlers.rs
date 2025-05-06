@@ -412,7 +412,7 @@ impl Handler {
             }
         };
         
-        let account =match Wallet::get_user_account(db, request.address).await{
+        let mut account =match Wallet::get_user_account(db, request.address).await{
             Ok(data)=>{
                 match data{
                     Some(account)=>{account},
@@ -437,6 +437,7 @@ impl Handler {
             }
         };
 
+        account.get_balance();
         TCPResponse::send_response_x::<Account>(NResponse {
             status: 1,
             message: "ok".to_string(),
