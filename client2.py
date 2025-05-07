@@ -25,8 +25,8 @@ class User:
 
 # ------------------ Users ------------------
 
-genesis_user = User("genesis", "genesis", "rolly golly folly tonny")
-user1 = User("mandy", "towerbb", "tennytony78389")
+genesis_user = User("genesis", "genesis", "hello hello")
+user1 = User("mandy", "towerbb", "hello2")
 user2 = User("greexy", "cuppythato", "moneybig holluccy")
 
 # ------------------ Network Config ------------------
@@ -67,7 +67,7 @@ def sign_data(data:str, private_key):
     signature = private_key.sign_deterministic(
         data.encode(),
         hashfunc=hashlib.sha256,
-        sigencode=sigencode_string
+        sigencode=sigencode_string_canonize
     )
     return signature.hex()
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     #send_payload(build_transaction_payload(genesis_user, user1.address, Decimal("5699.095"), "0"))
 
-    send_payload(build_get_account_payload(user1))
+    #send_payload(build_get_account_payload(user1))
     #send_payload(get_balance_payload(user1))
     #send_payload(build_mempool_payload())
 
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     #send_payload(build_get_all_blocks())
     #send_payload(build_hello_payload())
 
-    #send_payload(build_verify_wallet_payload(user1))
+    send_payload(build_verify_wallet_payload(genesis_user))
 
     # uud = User("greexy", "cuppythato", "berryhallen")
     # priv, pub = uud.generate_keys_from_string()

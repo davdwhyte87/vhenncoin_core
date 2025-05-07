@@ -108,7 +108,7 @@ impl Handler {
               signature: request.signature.clone(),
               timestamp: request.timestamp.clone(),
           };
-          
+          let mut message = String::new();
           match Wallet::verify_transaction_signature(db, request).await{
               Ok(is_ok) => {
                   if !is_ok{
@@ -122,9 +122,17 @@ impl Handler {
               },
               Err(err)=>{
                   error!("{}", err.to_string());
+                  match err{
+                      AppError::AccountNotFound(..)=>{
+                          message = "Account not found".to_string()
+                      },
+                      _=>{
+                          message = "Error verifying transaction signature".to_string();
+                      }
+                  }
                   TCPResponse::send_response_x::<String>(NResponse{
                       status:0,
-                      message: "error verifying transaction signature".to_string(),
+                      message,
                       data:None
                   }, stream).await;
                   return;
@@ -145,9 +153,12 @@ impl Handler {
                       },
                       AppError::TransactionAlreadyExists=>{
                           message = "Transaction already exists!".to_string();
+                      },
+                      AppError::AccountNotFound(..)=>{
+                          message = "Account not found!".to_string(); 
                       }
                       _=>{
-                         message = "Error transfering coin".to_string(); 
+                         message = "Error transferring coin".to_string(); 
                       }
                   }
                   TCPResponse::send_response_x::<String>(NResponse{
@@ -227,40 +238,46 @@ impl Handler {
             }
         };
         
-        // check if wallet exists 
-        let account = match Wallet::get_user_account(db,request.address.to_owned()).await{
-            Ok(data)=>{data},
+        match Wallet::get_user_account(db,request.address.clone()).await{
+            Ok(data)=>{
+                if data.is_none(){
+                    TCPResponse::send_response_x::<String>(NResponse {
+                        status: 0,
+                        message: "Account not found".to_string(),
+                        data: None
+                    }, stream).await;
+                    return;
+                }
+            },
             Err(err)=>{
-                error!("{}",err.to_string());
-                TCPResponse::send_response_x::<String>(NResponse{
-                    status:0,
-                    message: "error getting wallet data".to_string(),
-                    data:None
+                error!("{}", err.to_string());
+                TCPResponse::send_response_x::<String>(NResponse {
+                    status: 0,
+                    message: "error getting wallet".to_string(),
+                    data: None
                 }, stream).await;
                 return;
             }
-        };
-        match account{
-            Some(account)=>{},
-            None=>{
-                TCPResponse::send_response_x::<String>(NResponse{
-                    status:0,
-                    message: "Wallet does not exist".to_string(),
-                    data:None
-                }, stream).await;
-                return;
-            }
+            
         }
-        
+        let mut message = String::new();
         let is_ok =match Wallet::verify_signature(db, request.message, request.address, request.signature).await{
             Ok(d) => {
                 d
             },
             Err(err)=>{
                 error!("{}", err.to_string());
+                match err{
+                    AppError::AccountNotFound(..)=>{
+                      message = "Account not found!".to_string();  
+                    },
+                    _=>{
+                        message = "Error verifying signature".to_string();
+                    }
+                }
                 TCPResponse::send_response_x::<String>(NResponse{
                     status:0,
-                    message: "error verifying signature".to_string(),
+                    message,
                     data:None
                 }, stream).await;
                 return;
