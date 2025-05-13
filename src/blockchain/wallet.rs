@@ -195,7 +195,10 @@ impl Wallet {
         for tblock in account.unwrap_or_default().chain{
             if tblock.receiver == sender{
                 balance = tblock.amount + balance; 
+            } else if tblock.sender == sender {
+                balance -= &tblock.amount;
             }
+
         }
         return Ok(balance);
     }

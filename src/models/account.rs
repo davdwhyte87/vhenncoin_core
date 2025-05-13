@@ -20,7 +20,10 @@ impl Account{
         for tblock in &self.chain{
             if tblock.receiver.to_owned() == self.address{
                 balance = tblock.amount.to_owned() + balance;
+            } else if tblock.sender == self.address {
+                balance -= &tblock.amount;
             }
+
         }
         self.balance = balance.clone();
         return balance;

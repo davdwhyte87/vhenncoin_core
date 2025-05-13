@@ -4,6 +4,8 @@ debug/
 target/
 data/
 
+blockchain_db
+log
 
 *.Zone.Identifier
 
