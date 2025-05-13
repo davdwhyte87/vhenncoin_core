@@ -30,7 +30,7 @@ use crate::blockchain::node::Node;
 use crate::blockchain::wallet::Wallet;
 use crate::models::block::{Block, Chain};
 use crate::req_models::wallet_requests::CreateWalletReq;
-use crate::utils::test::test_dd;
+
 
 mod utils;
 mod req_models;
@@ -47,7 +47,6 @@ use hex_literal::hex;
 use k256::ecdsa::{Signature, VerifyingKey};
 use k256::ecdsa::signature::Verifier;
 use once_cell::sync::Lazy;
-use redb::{Database, TableDefinition};
 use sha2::{Digest, Sha256};
 
 use crate::handlers::handlers::Handler;
