@@ -19,7 +19,6 @@ use log::{debug, error, log};
 use mongodb::options::AuthMechanism::ScramSha256;
 use mongodb::results::UpdateResult;
 use r2d2_mongodb::mongodb::ErrorCode::OK;
-use redb::{Database, TableDefinition};
 use ring::agreement::{Algorithm, UnparsedPublicKey};
 use ring::error::Unspecified;
 use ring::rand::SystemRandom;
