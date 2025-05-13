@@ -12,7 +12,7 @@ use futures_util::future::err;
 use itertools::Format;
 use log::{debug, error, info};
 use log4rs::append::file;
-use redb::Database;
+
 use sha256::digest;
 use sled::Db;
 use tokio::net::TcpStream;
