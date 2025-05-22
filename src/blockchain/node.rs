@@ -4,7 +4,7 @@ use log::{info, error, debug};
 use anyhow::Result;
 
 use sled::Db;
-use tokio::io::{split, AsyncReadExt, BufReader};
+use tokio::io::{split, AsyncBufReadExt, AsyncReadExt, BufReader};
 use tokio::net::TcpStream;
 use tokio_util::codec::{FramedRead, LinesCodec};
 use crate::{ APP_CONFIG};
@@ -96,6 +96,20 @@ impl Node {
     }
     pub async fn handle_connection(mut stream:TcpStream, mempool: Arc<Mutex<Mempool>>, db: Arc<Db>) ->Result<(),AppError>{
         let mut buffer = [0u8; 512];
+        let mut reader = BufReader::new(&mut stream);
+        let mut line = String::new();
+        let bytes_read = match reader.read_line(&mut line).await{
+            Ok(data)=>{data},
+            Err(err)=>{
+                error!("{}", err);
+                TCPResponse::send_response_x::<String>(NResponse{
+                    status:0,
+                    message: "error with data".to_string(),
+                    data:None
+                }, &mut stream).await;
+                return Ok(())
+            }
+        };
         // let mut guard = stream_guard.lock().await;
         // let mut stream = &mut *guard;
         let size = match stream.read(&mut buffer).await{

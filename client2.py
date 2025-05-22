@@ -26,6 +26,7 @@ class User:
 # ------------------ Users ------------------
 
 genesis_user = User("genesis", "genesis", "hello hello")
+genesis_live_user = User("", "genesis", "")
 user1 = User("mandy", "towerbb", "hello2")
 user2 = User("greexy", "cuppythato", "moneybig holluccy")
 
@@ -34,6 +35,8 @@ user2 = User("greexy", "cuppythato", "moneybig holluccy")
 local_ip_address = "127.0.0.1"
 test_ip_address = "155.138.221.87"
 port = 3000
+live_ip_address = "155.138.221.87"
+live_port = 9990
 
 # ------------------ Helpers ------------------
 
@@ -182,7 +185,7 @@ def send_payload(payload):
     print("\n📦 Sending Payload:", payload)
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((local_ip_address, port))
+        s.connect((live_ip_address, live_port))
         s.sendall(data)
         s.shutdown(socket.SHUT_WR)
 
@@ -206,11 +209,11 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(user2))
+    #send_payload(build_wallet_payload(genesis_live_user))
 
-    #send_payload(build_transaction_payload(user1, user2.address, Decimal("6000.00"), "0"))
+    send_payload(build_transaction_payload(genesis_live_user, "ranger_team", Decimal("200000000.00"), "0"))
 
-    send_payload(build_get_account_payload(user1))
+    #send_payload(build_get_account_payload(user1))
     #send_payload(get_balance_payload(user1))
     #send_payload(build_mempool_payload())
 
