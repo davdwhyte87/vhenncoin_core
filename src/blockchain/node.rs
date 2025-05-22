@@ -127,7 +127,7 @@ impl Node {
         
         let data = String::from_utf8_lossy(&buffer[..size]).to_string();
         debug!("request data {}", data);
-        let message: serde_json::Value = match serde_json::from_str(&data){
+        let message: serde_json::Value = match serde_json::from_str(&line){
             Ok(data )=>{data},
             Err(err)=>{
                 log::error!("error {}", err.to_string());
