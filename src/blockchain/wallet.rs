@@ -1,14 +1,14 @@
 use std::error::Error;
 use std::str::FromStr;
 use actix_web::App;
-use bigdecimal::BigDecimal;
+use bigdecimal::{BigDecimal, Zero};
 use chrono::{Local, NaiveDateTime};
 use k256::ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::ecdsa::signature::hazmat::PrehashVerifier;
 use k256::ecdsa::signature::{DigestVerifier, Verifier};
 use k256::elliptic_curve::weierstrass::add;
 use k256::EncodedPoint;
-use num_traits::Zero;
+
 use sha2::{Digest, Sha256};
 use sled::Db;
 use uuid::Uuid;

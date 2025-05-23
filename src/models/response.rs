@@ -3,12 +3,13 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::wallet::{MongoWallet, WalletC};
 
-#[derive(Serialize,Deserialize)]
-pub struct GenericResponse {
+#[derive(Serialize)]
+pub struct GenericResp<T> {
     pub message: String,
-    pub code:i32
-    
+    pub status: i32,
+    pub data:Option<T>
 }
+
 
 #[derive(Serialize,Deserialize)]
 pub struct GetBalanceResponse {

@@ -1,7 +1,7 @@
 use std::clone;
 
 use bigdecimal::BigDecimal;
-use ring::aead::Nonce;
+
 use serde::{Deserialize, Serialize};
 use crate::models::transaction::Transaction;
 
