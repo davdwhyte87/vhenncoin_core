@@ -1,6 +1,5 @@
 use std::{clone, error::Error, path::Path};
 
-use futures::future::ok;
 use log::{debug, error};
 
 use serde::{de::{self, DeserializeOwned}, Deserialize};

@@ -78,8 +78,7 @@ def sign_data(data:str, private_key):
 
 def build_wallet_payload(user: User):
     user.generate_keys_from_string()
-    
-    return {
+    pload = {
         "action": "create_wallet",
         "data": {
             "address": user.address,
@@ -87,6 +86,8 @@ def build_wallet_payload(user: User):
             "public_key": user.public_key
         }
     }
+    print(print(json.dumps(pload, indent=2)))
+    return pload
 
 def build_get_user_transactions_payload(user: User):
     user.generate_keys_from_string()
@@ -97,13 +98,13 @@ def build_get_user_transactions_payload(user: User):
         }
     }
 
-def build_transaction_payload(sender: User, receiver: str, amount: Decimal, nonce: str):
+def build_transaction_payload(sender: User, receiver: str, amount: Decimal):
     priv, _ = sender.generate_keys_from_string()
     amount_str = format(amount.normalize(), 'f')
     ts_seconds = int(time.time())
     tx_id = get_tx_id(sender.address, receiver, amount_str, ts_seconds )
     signature = sign_transaction(sender.address, receiver, amount_str, ts_seconds, tx_id, priv)
-    return {
+    pload = {
         "action": "transfer",
         "data": {
             "sender": sender.address,
@@ -114,6 +115,9 @@ def build_transaction_payload(sender: User, receiver: str, amount: Decimal, nonc
             "signature": signature
         }
     }
+
+    print(print(json.dumps(pload, indent=2)))
+    return pload
 
 def build_verify_wallet_payload(user: User):
     priv, _ = user.generate_keys_from_string()
@@ -209,9 +213,9 @@ def send_payload(payload):
 if __name__ == "__main__":
     # Uncomment only the request you want to test 👇
 
-    #send_payload(build_wallet_payload(genesis_live_user))
+    #build_wallet_payload(user2)
 
-    send_payload(build_transaction_payload(genesis_live_user, "ranger_team", Decimal("200000000.00"), "0"))
+    build_transaction_payload(genesis_user, "ranger_team", Decimal("200000.00"))
 
     #send_payload(build_get_account_payload(user1))
     #send_payload(get_balance_payload(user1))
