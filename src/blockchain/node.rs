@@ -9,7 +9,7 @@ use tokio::net::TcpStream;
 
 use crate::{ APP_CONFIG};
 use crate::blockchain::transfer::Transfer;
-use crate::handlers::handlers::Handler;
+
 use crate::models::mempool::Mempool;
 use crate::models::response::NResponse;
 use crate::utils::app_error::AppError;

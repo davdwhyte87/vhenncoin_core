@@ -22,7 +22,6 @@ use crate::models::request::{CreateWalletReq, TransferReq};
 use crate::models::transaction::Transaction;
 use crate::utils::app_error::AppError;
 use crate::utils::struct_h::Struct_H;
-use crate::utils::time::get_date_time;
 
 pub struct Wallet{
 

@@ -17,7 +17,7 @@ use controllers::{
 
 };
 mod models;
-mod handlers;
+
 use models::{response};
 mod blockchain;
 use blockchain::wallet;
@@ -30,8 +30,7 @@ use crate::models::block::{Block, Chain};
 
 
 mod utils;
-mod req_models;
-mod middlewares;
+
 
 use std::thread;
 use actix_web::dev::Server;
@@ -44,7 +43,7 @@ use k256::ecdsa::signature::Verifier;
 use once_cell::sync::Lazy;
 use sha2::{Digest, Sha256};
 use crate::controllers::wallet_controller::{create_wallet, get_account, get_balance, transfer, verify_account};
-use crate::handlers::handlers::Handler;
+
 use crate::models::constants::{ACCOUNTS_TABLE, BLOCKS_TABLE, META_DATA_TABLE, TRANSACTIONS_LOG_TABLE};
 
 use crate::models::mempool::Mempool;

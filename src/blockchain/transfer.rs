@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::blockchain::wallet::{Wallet};
 use crate::models::block::{Block, TBlock, VBlock};
-use crate::utils::time::get_date_time;
+
 use crate::utils::utils::{MyError, MyErrorTypes};
 use base64::engine::general_purpose;
 use chrono::Utc;
