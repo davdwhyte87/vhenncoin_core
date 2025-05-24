@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0a913b70-ef3e-4b5f-9ff8-81736b516d25" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="ft_utxo" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="B6aWiqPF" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="2vRmWS1lHBrSJyUljapReKUsEWe" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/David/Documents/projects/rust/vhenncoin_core",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
+    "settings.editor.selected.configurable": "language.rust.cargo.check",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RsExternalLinterProjectSettings">
+    <option name="runOnTheFly" value="true" />
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0a913b70-ef3e-4b5f-9ff8-81736b516d25" name="Changes" comment="" />
+      <created>1744116291350</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1744116291350</updated>
+      <workItem from="1744116292547" duration="1303000" />
+      <workItem from="1744236693309" duration="5431000" />
+      <workItem from="1744275175948" duration="5392000" />
+      <workItem from="1744322670968" duration="10364000" />
+      <workItem from="1744345321188" duration="30850000" />
+      <workItem from="1744482794942" duration="374000" />
+      <workItem from="1744491393887" duration="4688000" />
+      <workItem from="1744544857361" duration="5660000" />
+      <workItem from="1744721512955" duration="2201000" />
+      <workItem from="1744752637846" duration="9874000" />
+      <workItem from="1744792163212" duration="2658000" />
+      <workItem from="1744931732139" duration="4952000" />
+      <workItem from="1744981038679" duration="4037000" />
+      <workItem from="1745009578331" duration="2871000" />
+      <workItem from="1745158944945" duration="2513000" />
+      <workItem from="1745166560397" duration="702000" />
+      <workItem from="1745226775183" duration="7578000" />
+      <workItem from="1745250348568" duration="1895000" />
+      <workItem from="1745269975726" duration="3851000" />
+      <workItem from="1745303246566" duration="48000" />
+      <workItem from="1745303313694" duration="478000" />
+      <workItem from="1745314925813" duration="585000" />
+      <workItem from="1745327669419" duration="1252000" />
+      <workItem from="1745483395175" duration="104000" />
+      <workItem from="1745715572400" duration="654000" />
+      <workItem from="1745784016313" duration="673000" />
+      <workItem from="1745825320232" duration="21792000" />
+      <workItem from="1745889886801" duration="1806000" />
+      <workItem from="1745917682957" duration="5266000" />
+      <workItem from="1745927500270" duration="8344000" />
+      <workItem from="1746198947792" duration="1546000" />
+      <workItem from="1746301430645" duration="41179000" />
+      <workItem from="1746515265081" duration="21039000" />
+      <workItem from="1746568800793" duration="895000" />
+      <workItem from="1746577449749" duration="3990000" />
+      <workItem from="1746691744681" duration="3668000" />
+      <workItem from="1746787958166" duration="1643000" />
+      <workItem from="1747096193780" duration="1173000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

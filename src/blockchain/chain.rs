@@ -1,5 +1,5 @@
 use std::error::Error;
-use redb::Database;
+
 use serde_json::to_string;
 use sha2::{Digest, Sha256};
 use sled::Db;

@@ -1,6 +1,6 @@
-use bigdecimal::BigDecimal;
+use bigdecimal::{BigDecimal, Zero};
 use chrono::NaiveDateTime;
-use num_traits::Zero;
+
 use serde_derive::{Deserialize, Serialize};
 use crate::models::block::TBlock;
 
