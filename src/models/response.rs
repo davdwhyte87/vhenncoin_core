@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::wallet::{MongoWallet, WalletC};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GenericResp<T> {
     pub message: String,
     pub status: i32,

@@ -31,8 +31,8 @@ user2 = User("greexy", "cuppythato", "moneybig holluccy")
 
 # ------------------ HTTP Config ------------------
 
-API_URL = "http://127.0.0.1:3000"  # change to your server URL and port
-
+LOCAL_API_URL = "http://127.0.0.1:3000"  # change to your server URL and port
+TEST_API_URL = "http://155.138.221.87:3000"
 # ------------------ Helpers ------------------
 
 def sign_transaction(sender: str, receiver: str, amount: str, timestamp: int, tx_id: str, private_key):
@@ -127,7 +127,7 @@ def build_hello_payload() -> dict:
 # ------------------ HTTP Send ------------------
 
 def send_payload_http(route:str,payload: dict):
-    url = f"{API_URL}/{route}"
+    url = f"{TEST_API_URL}/{route}"
     print("\n📦 Sending Payload:", json.dumps(payload))
     try:
         response = requests.post(url, json=payload, timeout=10)
@@ -145,6 +145,8 @@ if __name__ == "__main__":
     # Test calls:
     #send_payload_http("wallet/create_wallet",build_wallet_payload(genesis_user))
     #send_payload_http("wallet/transfer", build_transaction_payload(genesis_user, "towerbb", Decimal("100.00")))
-    #send_payload_http("wallet/get_account",build_get_account_payload(user1))
+    send_payload_http("wallet/get_account",build_get_account_payload(user1))
     #send_payload_http("wallet/get_balance", get_balance_payload(user1))
-    send_payload_http("wallet/verify_account", build_verify_wallet_payload(user1))
+    #send_payload_http("wallet/verify_account", build_verify_wallet_payload(user1))
+
+    TEST_API_URL
